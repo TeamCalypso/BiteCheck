@@ -13,9 +13,9 @@ Built for the WeMakeDevs x AWS **First Commit** hackathon (Sept 17-20, 2026), **
 
 | Lane | Owner | Directories |
 |---|---|---|
-| Backend, infra, deployment | Saket | `services/api/`, `infra/`, `scripts/`, `apps/extension/` |
+| Backend, infra, deployment | Saket | `services/api/`, `infra/`, `scripts/` |
 | Knowledge base & AI | Mahek | `data/`, prompts in `services/api/src/bitecheck/core/` |
-| Frontend | Ritvik | `apps/web/` |
+| Frontend | Ritvik | `apps/web/`, `apps/extension/` |
 
 **Stay in your lane's directories.** Cross-lane changes go through a PR so we do not
 collide during the sprint.

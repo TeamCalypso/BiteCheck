@@ -2,8 +2,8 @@
 
 ## Shared color semantics
 
-Both surfaces use the same status → color mapping (also in
-`apps/extension/src/config.js::STATUS_COLORS` and to be mirrored in the web app's theme):
+Both surfaces use the same status → color mapping — define it once in the extension (e.g.
+`apps/extension/src/config.js::STATUS_COLORS`) and mirror it in the web app's theme:
 
 | Status | Color | Hex |
 |---|---|---|
@@ -14,25 +14,25 @@ Both surfaces use the same status → color mapping (also in
 | `NO_DATA` | slate | `#64748B` |
 
 **Accessibility floor**: never encode status by color alone. Every status badge pairs a
-color with an icon (✓ / ⚠) and the status word itself (see `statusLabel()` in
-`apps/extension/src/ui.js` for the extension's copy; match it in the web app).
-`prefers-reduced-motion` skips the swarm split/scan transitions in favor of an instant
-state change.
+color with an icon (✓ / ⚠) and the status word itself — keep one small `statusLabel()`
+helper and use it in both the extension and the web app so the copy never drifts between
+them. `prefers-reduced-motion` skips the swarm split/scan transitions in favor of an
+instant state change.
 
 ## Extension
 
 Two tiers, deliberately — a dense inline badge plus an on-demand detail view, the pattern
 used by Honey/Keepa/Grammarly-style extensions:
 
-1. **Inline pill** — injected via Shadow DOM (`apps/extension/src/ui.js`) into the buy-box
-   anchor (`#desktop_buybox`, falling back to `#rightCol`/`#centerCol`). Colored by status,
-   short label ("Critical safety alert" / "Verified clean" / etc.), click target for the
-   drawer. Kept small and native-looking rather than trying to look like an Amazon
-   component — it should read as *ours*, not spoofed.
+1. **Inline pill** — injected via Shadow DOM into the buy-box anchor (`#desktop_buybox`,
+   falling back to `#rightCol`/`#centerCol`). Colored by status, short label ("Critical
+   safety alert" / "Verified clean" / etc.), click target for the drawer. Kept small and
+   native-looking rather than trying to look like an Amazon component — it should read as
+   *ours*, not spoofed.
 2. **Slide-over drawer** — `position: fixed; right: 0; width: 380px; z-index: 2147483647`,
    slides in on click. Contents: headline, plain-language summary, findings list (each with
    its citation, issuer, and date), disclaimer footer. All markup and styles live inside
-   the same Shadow DOM as the pill (`STYLES` template literal in `ui.js`) so Amazon's
+   the same Shadow DOM as the pill so Amazon's
    global CSS cannot alter it and it cannot alter Amazon's page.
 
 Shadow DOM is a hard requirement, not a nice-to-have — see `contract/README.md`-adjacent

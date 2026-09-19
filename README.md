@@ -82,7 +82,7 @@ serverless, zero idle compute cost when nobody is browsing.
 
 ```
 apps/web/            Web app (Vite + React + TS + three.js swarm) — owner: Ritvik
-apps/extension/       Chrome MV3 extension — owner: Saket
+apps/extension/       Chrome MV3 extension — owner: Ritvik
 services/api/          Lambda backend (Python 3.12) — owner: Saket
 contract/               Frozen API schema + fixtures — the boundary between all three lanes
 infra/                  AWS SAM template

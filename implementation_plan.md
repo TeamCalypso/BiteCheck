@@ -3,8 +3,8 @@
 Full context, architecture, and reasoning live in `README.md` and `docs/`. This file is
 just the checklist — read it first when picking work back up mid-sprint.
 
-Owners: **Saket** (backend/infra/deploy/extension), **Mahek** (knowledge base/AI),
-**Ritvik** (web frontend). Deadline: Sept 20, 2026 (Ship It track).
+Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
+**Ritvik** (web app + Chrome extension). Deadline: Sept 20, 2026 (Ship It track).
 
 ## Phase 0 — Foundation
 
@@ -20,15 +20,17 @@ Owners: **Saket** (backend/infra/deploy/extension), **Mahek** (knowledge base/AI
 - [x] `infra/template.yaml` (SAM) + `infra/samconfig.toml` skeleton
 - [x] `scripts/bootstrap_kb.py`, `build_corpus.py`, `seed_dynamo.py`, `teardown.sh`
       scaffolded with real CLI shape and TODOs
-- [x] `apps/extension/` MV3 shell: manifest, content script, background worker, DOM
-      reader, Shadow DOM UI (pill + drawer)
 - [x] Docs: PRD, TRD, app-flow, ui-ux-brief, backend-schema, data-sources, demo-script
 - [x] Push to `github.com/TeamCalypso/BiteCheck`, confirm repo is **public**
 - [ ] Saket: AWS account verified but showing **$0 credits** on two accounts so far (see
       note below) — Bedrock model access still blocked on this. **Currently the critical
       path blocker for everything in Phase 1.**
 - [ ] Ritvik: pull this scaffold, start the Vite + React + TS + R3F project in `apps/web/`
-      against `contract/fixtures/*.json`
+      against `contract/fixtures/*.json`; also owns `apps/extension/` (MV3 Chrome
+      extension) — see `apps/extension/README.md` for the handoff brief (contract, the
+      Shadow DOM requirement, SPA-nav handling). An earlier draft of the extension was
+      written by Saket and removed on Sept 20 — ownership moved to match `CLAUDE.md`,
+      which always specified `apps/extension/` as frontend, not backend
 - [ ] Mahek + Saket: start pulling the first ~20 source documents into `data/sources/` per
       `docs/data-sources.md`
 
@@ -82,7 +84,11 @@ Owners: **Saket** (backend/infra/deploy/extension), **Mahek** (knowledge base/AI
 
 ## Phase 3 — Surfaces
 
-- [ ] `apps/extension/src/config.js::API_BASE_URL` updated to the deployed API
+- [ ] Ritvik: `apps/extension/` built from `apps/extension/README.md`'s brief — manifest,
+      content script (DOM reader), background service worker (owns the fetch, not the
+      content script — see the README for why), Shadow DOM pill + drawer per
+      `docs/ui-ux-brief.md`
+- [ ] Ritvik: API base URL wired to the deployed endpoint once Saket has one
 - [ ] Extension tested unpacked on 5 real amazon.in product pages, including a variant
       switch and a non-food item
 - [ ] Ritvik: swarm split driven by real `nutrition.macros`, result panel, demo cards,
