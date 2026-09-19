@@ -54,4 +54,4 @@ artifact:
 
 | Document | Issuer | Date | Source URL | Added by |
 |---|---|---|---|---|
-| _(fill in as documents are added)_ | | | | |
+| Food Safety and Standards (Labelling and Display) Regulations, 2020 - Version VII | FSSAI | 2025-04-03 | https://fssai.gov.in/upload/uploadfiles/files/Comp_Labelling%20Display_Version%20VII_03042025.pdf | Mahek |
