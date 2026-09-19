@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BiteCheck — Food Safety AI</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    }
+    body {
+      width: 320px;
+      background: #05070c;
+      color: #f8fafc;
+      padding: 16px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .brand-tag {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .status-card {
+      margin-top: 14px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #10b981;
+      font-weight: 600;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+    .field-group {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field-label {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .api-input {
+      background: rgba(5, 7, 12, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: #f8fafc;
+      padding: 8px 10px;
+      font-size: 12px;
+      outline: none;
+    }
+    .api-input:focus {
+      border-color: #38bdf8;
+    }
+    .btn-save {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s;
+    }
+    .btn-save:hover {
+      background: #0ea5e9;
+    }
+    .links-row {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+    .links-row a {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+    .links-row a:hover {
+      text-decoration: underline;
+    }
+    .msg-saved {
+      font-size: 11px;
+      color: #34d399;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg width="24" height="18" viewBox="0 0 28 22" fill="none">
+      <rect x="0" y="0" width="2" height="22" fill="#ffffff" />
+      <rect x="3" y="0" width="1.5" height="22" fill="#ffffff" />
+      <rect x="5.5" y="0" width="3" height="22" fill="#ffffff" />
+      <rect x="9.5" y="0" width="1" height="22" fill="#ffffff" />
+      <rect x="11.5" y="0" width="2" height="22" fill="#ffffff" />
+      <rect x="14.5" y="0" width="1.5" height="11" fill="#ffffff" />
+      <rect x="17" y="0" width="2" height="11" fill="#ffffff" />
+      <rect x="20" y="0" width="1" height="11" fill="#ffffff" />
+      <rect x="22" y="0" width="3" height="22" fill="#ffffff" />
+      <rect x="26" y="0" width="1.5" height="22" fill="#ffffff" />
+      <path d="M18.5 21C16.5 17.5 14 14.5 15.5 12.5C17.5 14.5 18 18 18.5 21Z" fill="#22c55e" />
+      <path d="M18.5 21C20.5 17.5 23 14.5 21.5 12.5C19.5 14.5 19 18 18.5 21Z" fill="#16a34a" />
+    </svg>
+    <span class="brand-title">BiteCheck</span>
+    <span class="brand-tag">Food Safety AI</span>
+  </div>
+
+  <div class="status-card">
+    <div class="status-row">
+      <span style="color: #94a3b8;">Status:</span>
+      <span class="status-indicator"><span class="dot"></span> Active on Amazon.in</span>
+    </div>
+    <div class="status-row">
+      <span style="color: #94a3b8;">Active ASIN:</span>
+      <span id="current-asin" style="font-family: monospace; color: #38bdf8;">None</span>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="api-url">BiteCheck API Base URL</label>
+    <input type="text" id="api-url" class="api-input" value="http://localhost:8000" />
+    <button id="save-btn" class="btn-save">Save Endpoint</button>
+    <span id="msg-saved" class="msg-saved">✓ Endpoint saved successfully</span>
+  </div>
+
+  <div class="links-row">
+    <a href="http://localhost:5173" target="_blank" rel="noopener noreferrer">Open Web App ↗</a>
+    <a href="https://foscos.fssai.gov.in" target="_blank" rel="noopener noreferrer">FoSCoS Portal ↗</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

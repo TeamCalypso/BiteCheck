@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "BiteCheck — Food Safety AI",
+  "version": "1.0.0",
+  "description": "Grounded food safety intelligence, FSSAI licence verification & recall alerts directly on Amazon.in product listings.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "BiteCheck Food Safety",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.amazon.in/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.in/*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*",
+        "src/*"
+      ],
+      "matches": [
+        "https://www.amazon.in/*"
+      ]
+    }
+  ]
+}

@@ -51,8 +51,8 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
       `infra/kb-outputs.json`. **Blocked on AWS account access.**
 - [ ] Saket: implement `clients/bedrock.py::resolve_model_ids()`, fill
       `infra/samconfig.toml` parameters. **Blocked on AWS account access.**
-- [ ] Saket: `sam deploy` a first pass. **Get a live URL up as soon as AWS is unblocked.**
-- [ ] Ritvik: idle-state swarm rendering, wired to fixtures
+- [ ] Saket: `sam deploy` a first pass. **Get a live URL as soon as AWS is unblocked.**
+- [x] Ritvik: idle-state swarm rendering, wired to fixtures
 
 ## Phase 2 — Real analysis engine
 
