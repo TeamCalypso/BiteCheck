@@ -23,42 +23,62 @@ Owners: **Saket** (backend/infra/deploy/extension), **Mahek** (knowledge base/AI
 - [x] `apps/extension/` MV3 shell: manifest, content script, background worker, DOM
       reader, Shadow DOM UI (pill + drawer)
 - [x] Docs: PRD, TRD, app-flow, ui-ux-brief, backend-schema, data-sources, demo-script
-- [ ] Push to `github.com/TeamCalypso/BiteCheck`, confirm repo is **public**
-- [ ] Saket: AWS account confirmed, `us-east-1`, Bedrock model access requested for Titan
-      Text Embeddings v2 + chosen Claude/Nova models (do this immediately — approval can
-      lag)
+- [x] Push to `github.com/TeamCalypso/BiteCheck`, confirm repo is **public**
+- [ ] Saket: AWS account verified but showing **$0 credits** on two accounts so far (see
+      note below) — Bedrock model access still blocked on this. **Currently the critical
+      path blocker for everything in Phase 1.**
 - [ ] Ritvik: pull this scaffold, start the Vite + React + TS + R3F project in `apps/web/`
       against `contract/fixtures/*.json`
-- [ ] Mahek: start pulling the first ~20 source documents into `data/sources/` per
+- [ ] Mahek + Saket: start pulling the first ~20 source documents into `data/sources/` per
       `docs/data-sources.md`
+
+> **AWS account status (Sept 20):** original account verified but shows $0 available
+> credits (likely excluded from new-account promos since it was created long ago, even
+> though only just verified). Hackathon's $100 team credit form submitted, coupon email
+> not yet received. Pivoting to a second, genuinely new AWS account on a separate email,
+> plus checking AWS Educate. Real project cost is small (<$10 total per `docs/TRD.md`) so
+> once *any* account has a verified payment method, we are unblocked even without credits
+> — Bedrock is the only pay-from-token-one service in our stack; everything else is
+> free-tier.
 
 ## Phase 1 — Knowledge base + API skeleton
 
-- [ ] Mahek: `data/sources/` → `scripts/build_corpus.py` → `data/corpus/`, first 20 docs
+- [ ] Mahek + Saket: `data/sources/` → `scripts/build_corpus.py` → `data/corpus/`, first 20 docs
 - [ ] Saket: implement `scripts/bootstrap_kb.py` for real — corpus bucket, S3 vector
       bucket/index, Bedrock KB (`S3_VECTORS`), data source, first ingestion job; write
-      `infra/kb-outputs.json`
+      `infra/kb-outputs.json`. **Blocked on AWS account access.**
 - [ ] Saket: implement `clients/bedrock.py::resolve_model_ids()`, fill
-      `infra/samconfig.toml` parameters
-- [ ] Saket: implement `handlers/health.py` fully (done as stub — verify once deployed),
-      `sam deploy` a first pass with `analyze` still returning a fixture. **Get a live URL
-      up early.**
+      `infra/samconfig.toml` parameters. **Blocked on AWS account access.**
+- [ ] Saket: `sam deploy` a first pass. **Get a live URL up as soon as AWS is unblocked.**
 - [ ] Ritvik: idle-state swarm rendering, wired to fixtures
 
 ## Phase 2 — Real analysis engine
 
-- [ ] `core/cache.py` + `clients/ddb.py` (cache get/put/record_hit/trending)
-- [ ] `scripts/seed_dynamo.py::seed()` implemented; `data/seed/products.json` populated
-      with ~30 real ASINs across the 4 demo states
-- [ ] `core/normalizer.py` (Bedrock Converse entity extraction + food gate)
-- [ ] `clients/openfoodfacts.py` + `core/nutrition.py` (label → OFF → catalog, per-100g,
-      `other` remainder math)
-- [ ] `core/rag.py::retrieve()` (bedrock-agent-runtime Retrieve)
-- [ ] `core/verdict.py::assess()` (Converse, strict schema) — grounding.py already done
-- [ ] `handlers/analyze.py` wired end-to-end
-- [ ] Mahek: prompt iteration against real demo ASINs; corpus to 40+ docs; re-sync KB
-- [ ] `pytest` coverage on nutrition math and schema conformance of real (not fixture)
-      responses
+- [x] `core/cache.py` + `clients/ddb.py` (cache get/put/record_hit/trending) — implemented
+      and unit-tested against a moto-simulated DynamoDB, no AWS account needed
+- [x] `scripts/seed_dynamo.py::seed()` implemented and smoke-tested (moto) — including a
+      float→Decimal fix that would otherwise have crashed on first real run.
+      `data/seed/products.json` still needs the ~30 real ASINs filled in (Saket + Mahek)
+- [x] `core/normalizer.py` (Bedrock Converse entity extraction + food gate) — written,
+      unit-tested with a mocked Bedrock call. Real correctness (does it actually normalize
+      well) can only be confirmed once Bedrock access exists
+- [x] `clients/openfoodfacts.py` + `core/nutrition.py` (label → OFF → catalog, per-100g,
+      `other` remainder math, sugar/sat-fat netted out of their parent macro) — fully
+      implemented and unit-tested, including the float-formatting bug caught by tests
+- [x] `core/rag.py::retrieve()` (bedrock-agent-runtime Retrieve) — written, correctness
+      pending real Bedrock access to verify against
+- [x] `core/verdict.py::assess()` (Converse, strict schema) — written and unit-tested with
+      a mocked Bedrock call; `score_from_findings()` recomputes the score post-grounding
+- [x] `handlers/analyze.py` wired end-to-end — full pipeline integration-tested with
+      Bedrock/Open Food Facts faked and DynamoDB via moto; response validated against
+      `contract/analyze.schema.json` in the test itself. Caught and fixed a real schema
+      violation (`meta.latencyMs` was `null` on the not-food path) before it could ship
+- [x] `handlers/trending.py`, `handlers/grievance.py` implemented and unit-tested (moved up
+      from Phase 5 since they were quick once analyze.py's plumbing existed)
+- [ ] Mahek: prompt iteration against real demo ASINs; corpus to 40+ docs; re-sync KB —
+      **blocked on AWS account access**
+- [x] `pytest` coverage: **132 passing, 1 skipped**, zero AWS account required to run any
+      of it (`cd services/api && python -m pytest -q`)
 
 ## Phase 3 — Surfaces
 
@@ -75,9 +95,10 @@ Owners: **Saket** (backend/infra/deploy/extension), **Mahek** (knowledge base/AI
 
 ## Phase 5 — Completion + polish
 
-- [ ] `handlers/grievance.py` implemented
-- [ ] `handlers/trending.py` implemented (GSI query)
+- [x] `handlers/grievance.py` implemented (moved up — see Phase 2)
+- [x] `handlers/trending.py` implemented (moved up — see Phase 2)
 - [ ] `handlers/ingest.py` implemented, `DailySync` schedule flipped to `Enabled: true`
+      (still first on the cut list if time is short — see below)
 - [ ] `alternatives[]` populated from the catalog
 - [ ] Error/empty/not-food states verified on both surfaces
 - [ ] CORS verified from the Amplify origin and from `https://www.amazon.in`
@@ -96,7 +117,8 @@ Owners: **Saket** (backend/infra/deploy/extension), **Mahek** (knowledge base/AI
 
 1. `handlers/ingest.py` scheduling
 2. `alternatives[]`
-3. `handlers/grievance.py`
-4. `handlers/trending.py` / the live advisories ticker
+
+(`handlers/grievance.py` and `handlers/trending.py` are already done, so they're off this
+list — no longer a time trade-off.)
 
 **Never cut:** the grounding guard, citations on every finding, the live web app URL.

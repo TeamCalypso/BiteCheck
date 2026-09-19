@@ -16,7 +16,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import boto3
 
@@ -53,12 +55,43 @@ def validate(products: list[dict]) -> list[str]:
     return problems
 
 
-def seed(products: list[dict], region: str = "us-east-1") -> int:
+def _floats_to_decimal(value: Any) -> Any:
+    """boto3's DynamoDB resource API rejects native Python floats outright (it requires
+    Decimal for numeric types) - products.json's nutrition values (13.5, 41.2, ...) are
+    plain JSON floats, so this converts them recursively before every write."""
+    if isinstance(value, float):
+        return Decimal(str(value))
+    if isinstance(value, dict):
+        return {k: _floats_to_decimal(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_floats_to_decimal(v) for v in value]
+    return value
+
+
+def seed(products: list[dict], region: str = "us-east-1", table_name: str = TABLE_NAME) -> int:
     """Batch-write products into the catalog table. Returns count written.
 
-    TODO(saket): boto3.resource('dynamodb').Table(TABLE_NAME).batch_writer()
+    Only the fields the catalog schema actually uses are written (see
+    docs/backend-schema.md's bitecheck-catalog section) - any extra keys in a seed row
+    (like a human-only 'notes' field with commentary) are dropped rather than blindly
+    written, so a typo'd key in products.json can't silently create schema drift.
     """
-    raise NotImplementedError
+    table = boto3.resource("dynamodb", region_name=region).Table(table_name)
+    written = 0
+    with table.batch_writer() as batch:
+        for product in products:
+            item = {
+                "asin": product["asin"],
+                "brand": product["brand"],
+                "name": product["name"],
+                "category": product["category"],
+            }
+            for optional_key in ("netQuantity", "fssaiLicense", "nutrition", "notes"):
+                if product.get(optional_key) is not None:
+                    item[optional_key] = _floats_to_decimal(product[optional_key])
+            batch.put_item(Item=item)
+            written += 1
+    return written
 
 
 def main() -> int:
