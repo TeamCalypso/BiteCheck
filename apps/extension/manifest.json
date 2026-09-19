@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "BiteCheck - FSSAI Safety Scanner",
+  "version": "0.1.0",
+  "description": "Flags FSSAI recalls, lab-test failures and label discrepancies on Amazon.in product pages, with cited sources.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "BiteCheck"
+  },
+  "permissions": ["storage", "webNavigation"],
+  "host_permissions": ["https://www.amazon.in/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.amazon.in/*"],
+      "js": ["src/content.js"],
+      "css": [],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  }
+}

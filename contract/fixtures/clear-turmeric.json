@@ -1,0 +1,47 @@
+{
+  "requestId": "33333333-3333-4333-8333-333333333333",
+  "asin": "B0FIXTURE3",
+  "cached": true,
+  "generatedAt": "2026-09-20T04:16:00Z",
+  "product": {
+    "brand": "Demo Organics",
+    "name": "Organic Turmeric Powder, 200 g",
+    "category": "spices_blends",
+    "netQuantity": "200 g",
+    "fssaiLicense": "10098765432109",
+    "isFoodProduct": true,
+    "imageUrl": null
+  },
+  "verdict": {
+    "status": "CLEAR",
+    "score": 94,
+    "headline": "No adverse regulator records found for this brand or product",
+    "summary": "We searched Indian and international recall, contamination and claims records covering this brand and category and found nothing adverse. The listing declares a valid FSSAI licence number and a complete nutrition panel. Absence of a record is not a guarantee of purity."
+  },
+  "findings": [],
+  "nutrition": {
+    "basis": "per_100g",
+    "confidence": "HIGH",
+    "source": "amazon_label",
+    "macros": [
+      { "key": "carbohydrate", "label": "Carbs", "grams": 44.0, "pct": 44.0, "class": "NEUTRAL" },
+      { "key": "fiber", "label": "Fibre", "grams": 21.0, "pct": 21.0, "class": "GOOD" },
+      { "key": "protein", "label": "Protein", "grams": 9.7, "pct": 9.7, "class": "GOOD" },
+      { "key": "fat", "label": "Fat", "grams": 9.9, "pct": 9.9, "class": "NEUTRAL" },
+      { "key": "other", "label": "Unspecified", "grams": 15.4, "pct": 15.4, "class": "UNKNOWN" }
+    ],
+    "flags": [],
+    "additives": [],
+    "novaGroup": 1
+  },
+  "alternatives": [],
+  "grievance": { "eligible": false, "reason": "No adverse finding to report." },
+  "meta": {
+    "latencyMs": 88,
+    "chunksRetrieved": 7,
+    "findingsDropped": 0,
+    "modelId": "fixture",
+    "nutritionSource": "amazon_label"
+  },
+  "disclaimer": "Informational only, compiled from public regulator records. Not a laboratory result for the specific pack you are viewing. Always check the batch code printed on your package."
+}
