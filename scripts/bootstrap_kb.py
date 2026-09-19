@@ -35,7 +35,8 @@ from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
 
-REGION = "us-east-1"
+REGION = "ap-south-1"  # Mumbai - lower latency for our actual (Indian) userbase; both
+# S3 Vectors and Claude (via Global/APAC cross-region inference) are available here.
 EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v2:0"
 EMBEDDING_DIMENSIONS = 1024  # Titan v2 supports 256/512/1024; 1024 for best recall.
 VECTOR_INDEX_NAME = "bitecheck-index"
@@ -47,16 +48,27 @@ OUTPUTS_PATH = Path(__file__).resolve().parents[1] / "infra" / "kb-outputs.json"
 
 # Preferred verdict model, in priority order. resolve_model_id() picks the first available
 # one for this account rather than hardcoding a single ID, because newer Claude models
-# require inference-profile addressing (us.anthropic.*) that varies by account and by when
-# Bedrock model access was granted.
+# require inference-profile addressing that varies by account, by when Bedrock model
+# access was granted, and (from ap-south-1 specifically) by inference-profile prefix:
+#   - "global.*"  works from any source region, including ap-south-1 - prefer this
+#   - "apac.*"     regional profile, keeps inference traffic within APAC - good fallback
+#   - "us.*"       a us-east-1-sourced profile; unlikely to be invokable FROM ap-south-1,
+#                  kept as a last-resort candidate only in case the account has unusual
+#                  cross-region routing enabled
+#   - bare model ID (no prefix) - only the oldest models (e.g. Claude 3 Haiku) support
+#                  direct on-demand invocation without any inference profile at all
 VERDICT_MODEL_CANDIDATES = [
+    "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "apac.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "apac.anthropic.claude-3-7-sonnet-20250219-v1:0",
     "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
     "anthropic.claude-3-5-sonnet-20241022-v2:0",
 ]
 FAST_MODEL_CANDIDATES = [
+    "apac.amazon.nova-lite-v1:0",
     "us.amazon.nova-lite-v1:0",
-    "anthropic.claude-3-haiku-20240307-v1:0",
+    "anthropic.claude-3-haiku-20240307-v1:0",  # old enough to be directly invokable, no profile needed
 ]
 
 _TERMINAL_INGESTION_STATUSES = {"COMPLETE", "FAILED"}

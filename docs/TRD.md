@@ -6,11 +6,31 @@ disposable step tracker.
 
 ## Region & account
 
-`us-east-1`. Chosen over `ap-south-1` specifically because Amazon S3 Vectors availability
-in Mumbai was unconfirmed at build time while `us-east-1` support is certain, and the ~250ms
-extra round-trip from India is absorbed by the DynamoDB cache on every repeat lookup.
+**`ap-south-1` (Mumbai).**
+
+Started as `us-east-1` earlier in the build, out of caution: at the time, Amazon S3
+Vectors' availability in Mumbai was unconfirmed (initial research surfaced contradictory
+results), while `us-east-1` support was certain. Re-verified against the live AWS docs on
+Sept 20 and switched, because both blockers turned out to be cleared:
+
+- **S3 Vectors is confirmed available in `ap-south-1`** — it's on AWS's current published
+  region list ([S3 Vectors regions and endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html)).
+- **Claude models are reachable from `ap-south-1`** via Global and APAC cross-region
+  inference profiles (`global.anthropic.*`, `apac.anthropic.*`) — AWS added this
+  specifically to give Indian customers access without routing through the US. Titan Text
+  Embeddings v2 was already confirmed available directly in `ap-south-1`.
+
+With both confirmed, Mumbai is strictly better for this project: lower latency for the
+actual (Indian) userbase on every cold-path request, and a stronger "built for India"
+story for judges. The model-ID resolution in `scripts/bootstrap_kb.py` picks
+`global.*` profiles first (work from any source region), then `apac.*` (keeps inference
+traffic within APAC), falling back to `us.*` and bare model IDs only if neither is
+available to the account — see that file's `VERDICT_MODEL_CANDIDATES` comment for the
+full ordering rationale.
+
 Bedrock model access (Claude + Nova + Titan Text Embeddings v2) must be requested via the
-Bedrock console **before** anything else — approval is manual per-account and can lag.
+Bedrock console, **with the console region set to `ap-south-1`** — model access is granted
+per-region, not account-wide — **before** anything else; approval is manual and can lag.
 
 ## Vector store: Amazon S3 Vectors, not OpenSearch Serverless
 
