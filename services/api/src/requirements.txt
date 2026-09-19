@@ -1,0 +1,18 @@
+# Lambda runtime dependencies. This file MUST live here (inside the Lambda CodeUri that
+# infra/template.yaml points at - services/api/src/) because SAM's Python builder only
+# looks for requirements.txt directly inside CodeUri; one level up (the old location of
+# this file) is silently ignored by `sam build`, which would ship every Lambda without
+# these dependencies installed and fail at import time in the cloud, not locally.
+#
+# Dev-only tooling (pytest, jsonschema, moto, ruff) stays in services/api/requirements-dev.txt,
+# which pulls this file in via `-r src/requirements.txt`.
+#
+# boto3/botocore floor is 1.40 because scripts/bootstrap_kb.py needs the "s3vectors"
+# service client (S3 Vectors GA'd Dec 2025). Pinning it here also matters for the deployed
+# Lambdas: `sam build` bundles this exact boto3 into the package, overriding whatever
+# older version the base python3.12 Lambda runtime image ships with - important since the
+# Bedrock Converse/Retrieve APIs this project depends on are newer than that base image.
+boto3>=1.40.0
+botocore>=1.40.0
+pydantic>=2.9.0
+urllib3>=2.2.0
