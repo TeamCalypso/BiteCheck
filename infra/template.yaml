@@ -2,7 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   BiteCheck API - HTTP API + Lambda orchestrator + DynamoDB cache/catalog.
-  Region: us-east-1. The Bedrock Knowledge Base and its S3 Vectors store are bootstrapped
+  Region: ap-south-1 (Mumbai) - lower latency for the actual Indian userbase, and both
+  S3 Vectors and Claude (via Global/APAC cross-region inference) are available there.
+  The Bedrock Knowledge Base and its S3 Vectors store are bootstrapped
   separately by scripts/bootstrap_kb.py (one-time, slow resources kept out of the stack
   we redeploy repeatedly) and their IDs are passed in here as parameters.
 

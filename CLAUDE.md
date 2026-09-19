@@ -56,8 +56,13 @@ All three lanes code against it.
 - `handlers/` are thin: parse event, call `core/`, shape response. No logic.
 - `clients/` wrap external services so tests can mock them and retry/timeout config is in
   one place.
-- Region is `us-east-1`. Vector store is S3 Vectors — **do not** switch to OpenSearch
-  Serverless, it bills a ~$350/mo minimum.
+- Region is `ap-south-1` (Mumbai) — lower latency for the actual (Indian) userbase; both
+  S3 Vectors and Claude (via Global/APAC cross-region inference profiles) are confirmed
+  available there. See `docs/TRD.md` for the full reasoning and history — this was
+  `us-east-1` earlier in the build, switched once S3 Vectors' Mumbai availability and
+  Claude's cross-region reachability from `ap-south-1` were both confirmed.
+- Vector store is S3 Vectors — **do not** switch to OpenSearch Serverless, it bills a
+  ~$350/mo minimum.
 - Model IDs are resolved at bootstrap and injected as env vars. Do not hardcode them.
 
 ## Commands

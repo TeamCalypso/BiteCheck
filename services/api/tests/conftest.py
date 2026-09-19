@@ -16,6 +16,9 @@ import pytest
 
 # moto needs *some* credentials in the environment to satisfy boto3's client construction,
 # even though it never makes a real network call. These are fake and standard practice.
+# The region here is deliberately decoupled from the production region (ap-south-1, see
+# docs/TRD.md) - moto simulates DynamoDB identically regardless of region, so there is no
+# reason to keep this in sync with samconfig.toml.
 os.environ.setdefault("AWS_ACCESS_KEY_ID", "testing")
 os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "testing")
 os.environ.setdefault("AWS_SECURITY_TOKEN", "testing")
