@@ -21,9 +21,25 @@ See `../../docs/ui-ux-brief.md` for the three states (idle / scanning / result),
 tokens, and the demo card flow, and `../../docs/app-flow.md` for how a paste-a-link
 request maps onto the pipeline.
 
-## Setup
+## Setup & Scripts
 
-Not yet scaffolded — this file is a placeholder until Ritvik pushes the Vite project here
-(`npm create vite@latest . -- --template react-ts` from this directory, or your preferred
-equivalent). Once pushed, add the actual run/build commands to this README so `sam` /
-Amplify deploy steps in `../../infra/` and CI can reference them.
+To install dependencies:
+```bash
+npm install
+```
+
+To run the local development server:
+```bash
+npm run dev
+```
+
+To build for production (Amplify / static hosting):
+```bash
+npm run build
+```
+
+To preview the production build:
+```bash
+npm run preview
+```
+

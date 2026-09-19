@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BiteCheck — Food Safety Intelligence Layer over Indian E-Commerce</title>
+    <meta
+      name="description"
+      content="Cross-reference Amazon.in food products against FSSAI, EU RASFF, US FDA, and CFS regulatory records. Instant grounded safety verdicts with verified citations."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Radial Background Ambient Glow -->
+    <div id="bg-glow"></div>
+
+    <!-- Top Navigation Bar -->
+    <header id="top-bar">
+      <div class="top-left">
+        <div class="brand-badge">
+          <svg class="brand-barcode-icon" width="26" height="20" viewBox="0 0 28 22" fill="none">
+            <rect x="0" y="0" width="2" height="22" fill="#ffffff" />
+            <rect x="3" y="0" width="1.5" height="22" fill="#ffffff" />
+            <rect x="5.5" y="0" width="3" height="22" fill="#ffffff" />
+            <rect x="9.5" y="0" width="1" height="22" fill="#ffffff" />
+            <rect x="11.5" y="0" width="2" height="22" fill="#ffffff" />
+            <rect x="14.5" y="0" width="1.5" height="10" fill="#ffffff" />
+            <rect x="17" y="0" width="2" height="10" fill="#ffffff" />
+            <rect x="20" y="0" width="1" height="10" fill="#ffffff" />
+            <rect x="22" y="0" width="3" height="22" fill="#ffffff" />
+            <rect x="26" y="0" width="1.5" height="22" fill="#ffffff" />
+            <path d="M18.5 21C16.5 17.5 14 14.5 15.5 12.5C17.5 14.5 18 18 18.5 21Z" fill="#22c55e" />
+            <path d="M18.5 21C20.5 17.5 23 14.5 21.5 12.5C19.5 14.5 19 18 18.5 21Z" fill="#16a34a" />
+          </svg>
+          <span class="brand-name">BiteCheck</span>
+          <span class="brand-tag">Food Safety AI</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main UI Container -->
+    <main id="ui-wrapper">
+      <!-- 1. Search Section (Idle State) -->
+      <section id="search-section">
+        <div class="search-header">
+          <div class="regulator-badges">
+            <span class="reg-badge">FSSAI India</span>
+            <span class="reg-badge">EU RASFF</span>
+            <span class="reg-badge">US FDA</span>
+            <span class="reg-badge">CFS Hong Kong</span>
+          </div>
+          <h1 id="search-title">Verify food safety before you buy</h1>
+          <p id="search-subtitle">
+            Paste an Amazon.in product link to cross-reference against official recall, contamination, and adulteration circulars.
+          </p>
+        </div>
+
+        <div id="search-capsule">
+          <div class="input-icon-prefix">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+
+          <input
+            id="link-input"
+            type="text"
+            placeholder="Paste Amazon.in food product link (e.g. https://www.amazon.in/dp/B0...)"
+            autocomplete="off"
+            spellcheck="false"
+          />
+
+          <button id="clear-input-btn" class="icon-btn-secondary" title="Clear input" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <button id="submit-btn" aria-label="Run Safety Check">
+            <span class="btn-text">Inspect</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 1-Click Demo Cards for Judges -->
+        <div id="demo-cards-container">
+          <span class="demo-label">Or test 1-click evaluation cases:</span>
+          <div class="demo-cards-grid">
+            <button class="demo-card demo-critical" data-fixture="critical-spice">
+              <div class="demo-card-header">
+                <span class="status-pill status-critical">CRITICAL ALERT</span>
+                <span class="score-pill">18/100</span>
+              </div>
+              <div class="demo-card-title">Everest / MDH Garam Masala</div>
+              <div class="demo-card-desc">Overseas pesticide recall (Ethylene Oxide). Batches identified.</div>
+            </button>
+
+            <button class="demo-card demo-caution" data-fixture="caution-protein">
+              <div class="demo-card-header">
+                <span class="status-pill status-caution">CAUTION</span>
+                <span class="score-pill">58/100</span>
+              </div>
+              <div class="demo-card-title">Whey Protein Concentrate</div>
+              <div class="demo-card-desc">Marketing claim mismatch: 30g claimed vs 24g actual label.</div>
+            </button>
+
+            <button class="demo-card demo-clear" data-fixture="clear-turmeric">
+              <div class="demo-card-header">
+                <span class="status-pill status-clear">VERIFIED CLEAN</span>
+                <span class="score-pill">94/100</span>
+              </div>
+              <div class="demo-card-title">Organic Turmeric Powder</div>
+              <div class="demo-card-desc">Clean record in FSSAI/RASFF. Complete label & valid license.</div>
+            </button>
+
+            <button class="demo-card demo-notfood" data-fixture="not-food">
+              <div class="demo-card-header">
+                <span class="status-pill status-nodata">FOOD GATE</span>
+                <span class="score-pill">NON-FOOD</span>
+              </div>
+              <div class="demo-card-title">Wireless Mouse (Tech)</div>
+              <div class="demo-card-desc">Filter catches non-food listings before incurring RAG costs.</div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Scanning HUD Overlay (Scanning State) -->
+      <section id="scanning-hud" aria-live="polite">
+        <div class="scanning-card">
+          <div class="scanning-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-pulse"></div>
+            <svg class="scanner-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            </svg>
+          </div>
+
+          <h2 id="scanning-title">Cross-Referencing Regulatory Records</h2>
+          <p id="scanning-status" class="scanning-status-text">Resolving Amazon ASIN & product identity...</p>
+
+          <div class="scanning-pipeline">
+            <div id="step-resolve" class="pipe-step active">
+              <span class="step-dot"></span>
+              <span>1. Entity Extraction</span>
+            </div>
+            <div id="step-kb" class="pipe-step">
+              <span class="step-dot"></span>
+              <span>2. Bedrock KB Retrieve</span>
+            </div>
+            <div id="step-verdict" class="pipe-step">
+              <span class="step-dot"></span>
+              <span>3. Claude Reasoner</span>
+            </div>
+            <div id="step-ground" class="pipe-step">
+              <span class="step-dot"></span>
+              <span>4. Grounding Guard</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Dynamic 3D Swarm Floating Macro Badges -->
+      <aside id="molecular-hud" aria-label="3D Particle clusters">
+        <div class="macro-hud-header">
+          <span class="hud-title">MOLECULAR SWARM SPLIT</span>
+          <span class="hud-subtitle">Per 100g Mass Proportion</span>
+        </div>
+        <div id="macro-badges-list" class="macro-badges-grid">
+          <!-- Dynamic macro cards injected via JS -->
+        </div>
+      </aside>
+
+      <!-- 4. Inspection Bay: Detailed Safety & Grounded Findings (Result State) -->
+      <section id="inspection-bay" aria-label="Inspection Results">
+        <div class="bay-scrollable">
+          <!-- Header Bar with Reset Button -->
+          <div class="bay-nav">
+            <div class="bay-breadcrumbs">
+              <span class="crumb-brand" id="bay-brand">Demo Brand</span>
+              <span class="crumb-separator">/</span>
+              <span class="crumb-category" id="bay-category">Spices</span>
+            </div>
+            <button id="reset-view-btn" class="bay-close-btn" title="Inspect another product">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Inspect Another</span>
+            </button>
+          </div>
+
+          <!-- Product Identity -->
+          <div class="product-identity-card">
+            <div class="identity-content">
+              <h2 id="product-name" class="product-title">Garam Masala Powder 100g</h2>
+              <div class="meta-row">
+                <span class="meta-item" id="product-asin-badge">ASIN: B0FIXTURE1</span>
+                <span class="meta-item" id="product-quantity">Net: 100g</span>
+                <span class="meta-item fssai-badge" id="product-fssai">FSSAI: 10012345678901</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary Verdict Card -->
+          <div id="verdict-card" class="verdict-card">
+            <div class="verdict-score-wrapper">
+              <div class="verdict-score-gauge">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path
+                    class="circle-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    id="score-circle-path"
+                    class="circle-progress"
+                    stroke-dasharray="0, 100"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div class="gauge-center">
+                  <span id="verdict-score" class="score-number">18</span>
+                  <span class="score-denom">/100</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="verdict-text-content">
+              <div class="verdict-badge-row">
+                <span id="verdict-status-pill" class="status-pill">CRITICAL ALERT</span>
+                <span id="verdict-cache-tag" class="cache-tag">Real-time Grounded RAG</span>
+              </div>
+              <h3 id="verdict-headline" class="verdict-headline">Pesticide recall in two overseas jurisdictions</h3>
+              <p id="verdict-summary" class="verdict-summary">
+                Regulators withdrew specific batches after detecting ethylene oxide above limits.
+              </p>
+            </div>
+          </div>
+
+          <!-- Non-Food Notice (Shown only if isFoodProduct === false) -->
+          <div id="non-food-notice" class="notice-box notice-warning" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+              <strong>Non-Food Listing Filtered</strong>
+              <p>BiteCheck only evaluates food, beverage, and nutritional items. Non-food products are caught by the initial classifier to conserve AI tokens.</p>
+            </div>
+          </div>
+
+          <!-- Grounded Findings Section -->
+          <div id="findings-section" class="bay-section">
+            <div class="section-title-row">
+              <h4 class="bay-section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Grounded Regulator Records (<span id="findings-count">0</span>)
+              </h4>
+            </div>
+
+            <div id="findings-container" class="findings-list">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Nutrition & Additives Intelligence -->
+          <div id="nutrition-section" class="bay-section">
+            <h4 class="bay-section-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                <path d="M2 12h20"></path>
+              </svg>
+              Composition & Additives Analysis
+            </h4>
+
+            <div class="nutrition-cards-row">
+              <!-- NOVA Group Card -->
+              <div id="nova-card" class="nova-card">
+                <div class="nova-badge-circle" id="nova-number">NOVA 3</div>
+                <div class="nova-content">
+                  <span class="nova-label" id="nova-label">Processed Food</span>
+                  <span class="nova-desc" id="nova-desc">Manufactured with added salt, sugar or fats.</span>
+                </div>
+              </div>
+
+              <!-- Additives Count Card -->
+              <div class="additives-summary-card">
+                <span class="sub-label">Detected Additives</span>
+                <div id="additives-tags-list" class="additives-tags">
+                  <span class="empty-tag">None flagged</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flags -->
+            <div id="flags-container" class="flags-container" style="display: none;"></div>
+          </div>
+
+          <!-- Safer Alternatives Section -->
+          <div id="alternatives-section" class="bay-section" style="display: none;">
+            <h4 class="bay-section-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Verified Clean Alternatives in this Category
+            </h4>
+            <div id="alternatives-list" class="alternatives-grid"></div>
+          </div>
+
+          <!-- FoSCoS Grievance Action Bar -->
+          <div id="grievance-action-card" class="grievance-banner" style="display: none;">
+            <div class="grievance-info">
+              <div class="grievance-tag">FoSCoS Grievance Eligible</div>
+              <p>This product holds verifiable regulator violations. You can generate a pre-formatted consumer complaint to submit on the national FoSCoS portal.</p>
+            </div>
+            <button id="draft-grievance-btn" class="grievance-btn">
+              Draft Complaint Form
+            </button>
+          </div>
+
+          <!-- Mandatory Regulatory Disclaimer -->
+          <footer class="bay-footer">
+            <p id="bay-disclaimer" class="disclaimer-text">
+              Informational only, compiled from public regulator records. Not a laboratory result for the specific pack you are viewing. Always check the batch code printed on your package.
+            </p>
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <!-- FoSCoS Grievance Modal -->
+    <div id="grievance-modal" class="modal-backdrop" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">FoSCoS Consumer Grievance Draft</h3>
+            <span class="modal-subtitle">Ready for submission to Food Safety and Standards Authority of India</span>
+          </div>
+          <button id="close-modal-btn" class="icon-btn-secondary" title="Close modal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-instruction">
+            BiteCheck drafts this formal complaint using the exact circular reference and batch identifiers. Review the text below, copy it, and paste it into the official FoSCoS portal.
+          </p>
+          <textarea id="grievance-text" class="grievance-textarea" readonly></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button id="copy-grievance-btn" class="modal-action-btn primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copy-btn-label">Copy Complaint Text</span>
+          </button>
+          <a
+            id="open-foscos-link"
+            href="https://foscos.fssai.gov.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="modal-action-btn secondary"
+          >
+            Open FoSCoS Portal
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script entry point -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
