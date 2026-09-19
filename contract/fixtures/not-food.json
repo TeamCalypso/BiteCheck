@@ -1,0 +1,33 @@
+{
+  "requestId": "44444444-4444-4444-8444-444444444444",
+  "asin": "B0FIXTURE4",
+  "cached": false,
+  "generatedAt": "2026-09-20T04:18:00Z",
+  "product": {
+    "brand": "Demo Electronics",
+    "name": "Wireless Mouse, 2.4 GHz",
+    "category": "non_food",
+    "netQuantity": null,
+    "fssaiLicense": null,
+    "isFoodProduct": false,
+    "imageUrl": null
+  },
+  "verdict": {
+    "status": "NO_DATA",
+    "score": 100,
+    "headline": "Not a food product",
+    "summary": "BiteCheck only analyses food, beverage and nutrition products regulated by FSSAI. This listing was classified as non-food, so no safety analysis was run."
+  },
+  "findings": [],
+  "nutrition": null,
+  "alternatives": [],
+  "grievance": { "eligible": false, "reason": "Not a food product." },
+  "meta": {
+    "latencyMs": 640,
+    "chunksRetrieved": 0,
+    "findingsDropped": 0,
+    "modelId": "fixture",
+    "nutritionSource": null
+  },
+  "disclaimer": "Informational only, compiled from public regulator records. Not a laboratory result for the specific pack you are viewing. Always check the batch code printed on your package."
+}

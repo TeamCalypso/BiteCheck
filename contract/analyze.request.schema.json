@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bitecheck.dev/schemas/analyze.request.schema.json",
+  "title": "BiteCheck AnalyzeRequest",
+  "description": "Request body for POST /v1/analyze. The web app sends url only; the extension also sends extracted DOM data.",
+  "type": "object",
+  "required": ["source", "url"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["extension", "web"],
+      "description": "Drives which enrichment path runs. 'web' has no DOM data and falls back to slug + catalog + Open Food Facts."
+    },
+    "url": {
+      "type": "string",
+      "description": "Full amazon.in product URL. The ASIN and the product slug are parsed out of it server-side."
+    },
+    "extracted": {
+      "type": ["object", "null"],
+      "description": "Extension only. Read from the page DOM in the user's own browser session - never scraped server-side.",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": ["string", "null"], "description": "#productTitle" },
+        "brand": { "type": ["string", "null"], "description": "#bylineInfo, with the 'Brand: ' / 'Visit the ... Store' wrapper stripped" },
+        "bullets": { "type": "array", "items": { "type": "string" }, "description": "#feature-bullets li" },
+        "technicalDetails": {
+          "type": "object",
+          "description": "Flattened key/value pairs from the Product/Technical Details tables. Keys are used verbatim, e.g. 'FSSAI License', 'Net Quantity'.",
+          "additionalProperties": { "type": "string" }
+        },
+        "ingredientsText": { "type": ["string", "null"] },
+        "nutritionTable": {
+          "type": "array",
+          "description": "Raw label rows. Values stay as displayed strings; parsing and unit normalization happen server-side in core/nutrition.py.",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "description": "e.g. 'Protein', 'Total Sugars'" },
+              "per100g": { "type": ["string", "null"], "description": "e.g. '24 g', '1.2mg'" },
+              "perServing": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "imageUrl": { "type": ["string", "null"] }
+      }
+    },
+    "forceRefresh": {
+      "type": "boolean",
+      "default": false,
+      "description": "Bypass the DynamoDB cache and re-run RAG. Used during development and by the demo reset."
+    }
+  }
+}

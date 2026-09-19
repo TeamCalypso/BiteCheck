@@ -1,0 +1,49 @@
+# ---- Python / backend ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- AWS SAM ----
+.aws-sam/
+samconfig.local.toml
+packaged.yaml
+
+# ---- Generated infra outputs (contain account-specific IDs) ----
+infra/kb-outputs.json
+infra/stack-outputs.json
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+build/
+.vite/
+*.local
+.eslintcache
+
+# ---- Extension build artifacts ----
+apps/extension/dist/
+apps/extension/*.zip
+
+# ---- Raw corpus downloads (large PDFs; normalized output in data/corpus is committed) ----
+data/sources/**
+!data/sources/.gitkeep
+!data/sources/README.md
+
+# ---- Secrets / env ----
+.env
+.env.*
+!.env.example
+*.pem
+aws-credentials*
+
+# ---- Editors / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

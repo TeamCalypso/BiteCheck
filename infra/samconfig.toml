@@ -1,0 +1,22 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "bitecheck"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+# Fill these in after scripts/bootstrap_kb.py runs and after Bedrock model access is
+# granted. Do not commit real values with account-specific ARNs beyond what's already
+# safe to share; kb-outputs.json (gitignored) is the source of truth.
+parameter_overrides = [
+  "KnowledgeBaseId=REPLACE_ME",
+  "CorpusBucketName=REPLACE_ME",
+  "BedrockVerdictModelId=REPLACE_ME",
+  "BedrockFastModelId=REPLACE_ME",
+  "AllowedOrigin=*"
+]
+
+[default.build.parameters]
+cached = true
+parallel = true

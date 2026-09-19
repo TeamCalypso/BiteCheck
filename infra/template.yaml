@@ -1,0 +1,186 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  BiteCheck API - HTTP API + Lambda orchestrator + DynamoDB cache/catalog.
+  Region: us-east-1. The Bedrock Knowledge Base and its S3 Vectors store are bootstrapped
+  separately by scripts/bootstrap_kb.py (one-time, slow resources kept out of the stack
+  we redeploy repeatedly) and their IDs are passed in here as parameters.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 25 # keep under the HTTP API's 29s integration limit
+    MemorySize: 512
+    Environment:
+      Variables:
+        APP_VERSION: "0.1.0"
+        CACHE_TABLE: !Ref CacheTable
+        CATALOG_TABLE: !Ref CatalogTable
+        KNOWLEDGE_BASE_ID: !Ref KnowledgeBaseId
+        CORPUS_BUCKET: !Ref CorpusBucketName
+        BEDROCK_VERDICT_MODEL: !Ref BedrockVerdictModelId
+        BEDROCK_FAST_MODEL: !Ref BedrockFastModelId
+        CACHE_TTL_SECONDS: "86400"
+        RETRIEVAL_TOP_K: "8"
+
+Parameters:
+  KnowledgeBaseId:
+    Type: String
+    Description: Bedrock Knowledge Base ID, written to infra/kb-outputs.json by bootstrap_kb.py
+  CorpusBucketName:
+    Type: String
+    Description: S3 bucket holding the normalized regulator/lab document corpus
+  BedrockVerdictModelId:
+    Type: String
+    Description: Model or inference-profile ID used for the strict-schema verdict call
+  BedrockFastModelId:
+    Type: String
+    Description: Cheap model ID used for entity normalization and the food gate
+  AllowedOrigin:
+    Type: String
+    Default: "*"
+    Description: >
+      CORS origin for the HTTP API. Tighten to the Amplify URL and
+      chrome-extension://<id> once both are known; keep * only for early development.
+
+Resources:
+  # ---------------------------------------------------------------- HTTP API
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin]
+        AllowMethods: ["GET", "POST", "OPTIONS"]
+        AllowHeaders: ["Content-Type"]
+        MaxAge: 300
+
+  # ---------------------------------------------------------------- Lambdas
+  AnalyzeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../services/api/src
+      Handler: bitecheck.handlers.analyze.handler
+      Description: Main orchestrator - resolve, cache, normalize, retrieve, assess, ground.
+      Timeout: 25
+      MemorySize: 1024
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref CacheTable }
+        - DynamoDBReadPolicy: { TableName: !Ref CatalogTable }
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:Converse
+              Resource: "*" # narrow to specific model ARNs once model IDs are finalized
+            - Effect: Allow
+              Action:
+                - bedrock-agent-runtime:Retrieve
+              Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/${KnowledgeBaseId}"
+      Events:
+        Analyze:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /v1/analyze, Method: POST }
+
+  TrendingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../services/api/src
+      Handler: bitecheck.handlers.trending.handler
+      Description: Top cached products by hit count. No Bedrock cost.
+      Policies:
+        - DynamoDBReadPolicy: { TableName: !Ref CacheTable }
+      Events:
+        Trending:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /v1/trending, Method: GET }
+
+  GrievanceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../services/api/src
+      Handler: bitecheck.handlers.grievance.handler
+      Description: Drafts (never submits) a FoSCoS complaint from a prior analysis.
+      Policies:
+        - DynamoDBReadPolicy: { TableName: !Ref CacheTable }
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock:Converse]
+              Resource: "*"
+      Events:
+        Grievance:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /v1/grievance, Method: POST }
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../services/api/src
+      Handler: bitecheck.handlers.health.handler
+      Timeout: 5
+      MemorySize: 128
+      Events:
+        Health:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /v1/health, Method: GET }
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../services/api/src
+      Handler: bitecheck.handlers.ingest.handler
+      Description: Daily corpus refresh - new alerts in, KB re-sync triggered.
+      Timeout: 300
+      MemorySize: 512
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref CorpusBucketName }
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock-agent:StartIngestionJob, bedrock-agent:GetIngestionJob]
+              Resource: "*"
+      Events:
+        DailySync:
+          Type: Schedule
+          Properties:
+            Schedule: "rate(1 day)"
+            Enabled: false # flip on once ingest.py is implemented (Phase 5)
+
+  # ---------------------------------------------------------------- DynamoDB
+  CacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: bitecheck-cache
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: asin, AttributeType: S }
+        - { AttributeName: trendBucket, AttributeType: S }
+        - { AttributeName: hitCount, AttributeType: N }
+      KeySchema:
+        - { AttributeName: asin, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      GlobalSecondaryIndexes:
+        - IndexName: TrendingIndex
+          KeySchema:
+            - { AttributeName: trendBucket, KeyType: HASH }
+            - { AttributeName: hitCount, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+
+  CatalogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: bitecheck-catalog
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: asin, AttributeType: S }
+      KeySchema:
+        - { AttributeName: asin, KeyType: HASH }
+
+Outputs:
+  ApiUrl:
+    Description: Base URL the extension and web app call
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  CacheTableName:
+    Value: !Ref CacheTable
+  CatalogTableName:
+    Value: !Ref CatalogTable

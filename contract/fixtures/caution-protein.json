@@ -1,0 +1,92 @@
+{
+  "requestId": "22222222-2222-4222-8222-222222222222",
+  "asin": "B0FIXTURE2",
+  "cached": false,
+  "generatedAt": "2026-09-20T04:14:00Z",
+  "product": {
+    "brand": "Demo Nutrition",
+    "name": "Whey Protein Concentrate, Chocolate, 1 kg",
+    "category": "supplements_protein",
+    "netQuantity": "1 kg",
+    "fssaiLicense": null,
+    "isFoodProduct": true,
+    "imageUrl": null
+  },
+  "verdict": {
+    "status": "CAUTION",
+    "score": 58,
+    "headline": "Protein claim on the listing does not match the declared label",
+    "summary": "The listing advertises 30 g of protein per serving, but the nutrition panel works out to roughly 24 g for the same serving size. The category also carries an active regulatory advisory on unverified protein claims. No recall or contamination record was found for this brand."
+  },
+  "findings": [
+    {
+      "id": "f1",
+      "severity": "MEDIUM",
+      "type": "LABEL_CLAIM",
+      "scope": "PRODUCT",
+      "title": "Advertised protein content exceeds the declared nutrition panel",
+      "detail": "Marketing copy states 30 g protein per 33 g scoop. The per-100g panel declares 72 g protein, which is about 24 g for that scoop. Claims regulations require advertised nutrient values to match the declared label.",
+      "batches": [],
+      "citations": [
+        {
+          "label": "FSSAI Advertising and Claims Regulations, 2018 - Reg. 6",
+          "issuer": "FSSAI",
+          "date": "2018-11-19",
+          "sourceUrl": "https://www.fssai.gov.in/",
+          "s3Uri": "s3://bitecheck-corpus/fssai/advertising-claims-2018.md",
+          "excerpt": "No person shall make a claim which is inconsistent with the information declared on the label."
+        }
+      ]
+    },
+    {
+      "id": "f2",
+      "severity": "INFO",
+      "type": "ADDITIVE",
+      "scope": "PRODUCT",
+      "title": "Contains a permitted but commonly flagged sweetener",
+      "detail": "The ingredient list includes sucralose (INS 955). It is permitted in this category, but products carrying it must declare it prominently. Listed here for transparency, not as a violation.",
+      "batches": [],
+      "citations": [
+        {
+          "label": "FSSAI Food Product Standards and Food Additives Regulations, 2011",
+          "issuer": "FSSAI",
+          "date": "2011-08-01",
+          "sourceUrl": "https://www.fssai.gov.in/",
+          "s3Uri": "s3://bitecheck-corpus/fssai/food-additives-2011.md",
+          "excerpt": "INS 955 Sucralose - permitted with maximum limits as specified."
+        }
+      ]
+    }
+  ],
+  "nutrition": {
+    "basis": "per_100g",
+    "confidence": "HIGH",
+    "source": "amazon_label",
+    "macros": [
+      { "key": "protein", "label": "Protein", "grams": 72.0, "pct": 72.0, "class": "GOOD" },
+      { "key": "carbohydrate", "label": "Carbs", "grams": 12.0, "pct": 12.0, "class": "NEUTRAL" },
+      { "key": "sugar", "label": "Sugars", "grams": 4.5, "pct": 4.5, "class": "WATCH" },
+      { "key": "fat", "label": "Fat", "grams": 6.0, "pct": 6.0, "class": "NEUTRAL" },
+      { "key": "sodium", "label": "Sodium", "grams": 0.4, "pct": 0.4, "class": "WATCH" },
+      { "key": "other", "label": "Unspecified", "grams": 5.1, "pct": 5.1, "class": "UNKNOWN" }
+    ],
+    "flags": [
+      { "code": "CLAIM_MISMATCH", "label": "Advertised 30 g protein per serving; label implies about 24 g" }
+    ],
+    "additives": [
+      { "ins": "INS 955", "name": "Sucralose", "risk": "WATCH" },
+      { "ins": "INS 322", "name": "Lecithin", "risk": "OK" }
+    ],
+    "novaGroup": 4
+  },
+  "alternatives": [],
+  "grievance": { "eligible": false, "reason": "No CRITICAL or HIGH finding. A labelling complaint can still be filed manually." },
+  "meta": {
+    "latencyMs": 3860,
+    "chunksRetrieved": 6,
+    "findingsDropped": 0,
+    "modelId": "fixture",
+    "nutritionSource": "amazon_label"
+  },
+  "disclaimer": "Informational only, compiled from public regulator records. Not a laboratory result for the specific pack you are viewing. Always check the batch code printed on your package."
+}
