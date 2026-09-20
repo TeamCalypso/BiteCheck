@@ -15,7 +15,7 @@ track.
 - **Live API:** https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod — all four
   routes (`/v1/health`, `/v1/trending`, `/v1/analyze`, `/v1/grievance`) are live on real
   AWS with real AI calls (see "Why Gemini, not Bedrock, is live" below)
-- **Demo video:** https://youtu.be/Ehpiw_XWcoo
+- **Demo video:** https://youtu.be/ZgKByi9Hakw
 - **Chrome extension:** load unpacked from `apps/extension/` (see below) — Chrome Web
   Store listing is out of scope for the hackathon deadline
 
