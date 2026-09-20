@@ -61,7 +61,11 @@ async function handleAnalyzeProduct({ url, asin, extracted, forceRefresh }) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    // See apps/web/src/api/client.js's analyzeProduct() for why this is 28s, not 8s: a
+    // cache-miss analysis has been measured live at 9-20s (two sequential Gemini calls),
+    // and 8s aborts before the backend finishes - it then caches the result anyway, which
+    // is why a retry "just works".
+    const timeoutId = setTimeout(() => controller.abort(), 28000);
 
     const res = await fetch(endpoint, {
       method: 'POST',

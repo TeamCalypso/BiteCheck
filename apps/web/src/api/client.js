@@ -29,7 +29,13 @@ export function isValidAmazonUrl(url) {
  * Executes food safety and grounding analysis for an Amazon product URL.
  */
 export async function analyzeProduct(url, options = {}) {
-  const { forceRefresh = false, timeoutMs = 8000 } = options;
+  // A cache-miss analysis makes two sequential Gemini calls plus retrieval/grounding, and
+  // has been measured live at 9-20s; the Lambda itself has a 25s budget. An 8s client-side
+  // abort here doesn't mean the request failed - it means the backend was still working,
+  // and it finishes and caches the result anyway (which is why a retry "just works": it's
+  // a cache hit). 28s gives a small margin past the Lambda's own ceiling so a genuine
+  // backend timeout surfaces as a real error instead of being masked by this firing first.
+  const { forceRefresh = false, timeoutMs = 28000 } = options;
 
   // Live API Call with AbortController
   const controller = new AbortController();

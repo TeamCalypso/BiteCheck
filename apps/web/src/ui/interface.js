@@ -209,7 +209,7 @@ export function setupUI(engine) {
       if (step === 2) {
         pipeStepResolve.classList.replace('active', 'completed');
         pipeStepKb.classList.add('active');
-        scanningStatus.textContent = 'Querying Bedrock Knowledge Base (S3 Vectors)...';
+        scanningStatus.textContent = 'Querying regulator knowledge base...';
       } else if (step === 3) {
         pipeStepKb.classList.replace('active', 'completed');
         pipeStepVerdict.classList.add('active');
