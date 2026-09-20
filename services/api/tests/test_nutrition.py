@@ -6,6 +6,7 @@ doesn't sum to 100, the split animation is visibly wrong. Test that invariant ha
 
 import pytest
 
+from bitecheck.clients import bedrock
 from bitecheck.core.nutrition import build, close_to_hundred, parse_label_value
 
 
@@ -179,3 +180,66 @@ class TestBuild:
         n = build(None, off, None)
         names = {a["ins"] for a in n.additives}
         assert "E951" in names and "E322" in names
+
+
+class TestAiEstimateFallback:
+    """The last-resort path for products with no label, no OFF match, and no catalog
+    entry - e.g. a judge pasting an arbitrary Amazon link that isn't one of the seeded
+    demo ASINs. See the module docstring for why this is safe (never touches findings[]
+    or the grounding guard) and always low-confidence."""
+
+    def test_not_attempted_without_a_product_name(self, monkeypatch):
+        called = []
+        monkeypatch.setattr(bedrock, "converse", lambda **kw: called.append(kw) or {})
+        assert build(None, None, None) is None
+        assert called == []
+
+    def test_falls_back_to_ai_estimate_when_every_real_source_is_empty(self, monkeypatch):
+        monkeypatch.setattr(
+            bedrock,
+            "converse",
+            lambda **kw: {"protein": 8.0, "carbohydrate": 60.0, "fat": 3.0, "sodium": 0.02},
+        )
+        n = build(None, None, None, brand="Everest", name="Garam Masala", category="spices_blends")
+        assert n is not None
+        assert n.source == "ai_estimate"
+        assert n.confidence == "LOW"
+
+    def test_ai_estimate_is_flagged_for_transparency(self, monkeypatch):
+        monkeypatch.setattr(
+            bedrock,
+            "converse",
+            lambda **kw: {"protein": 8.0, "carbohydrate": 60.0, "fat": 3.0},
+        )
+        n = build(None, None, None, brand=None, name="Some Unrecognized Snack", category="packaged_snacks")
+        codes = {f["code"] for f in n.flags}
+        assert "AI_ESTIMATED_NUTRITION" in codes
+
+    def test_ai_estimate_macros_still_sum_to_100(self, monkeypatch):
+        monkeypatch.setattr(
+            bedrock,
+            "converse",
+            lambda **kw: {"protein": 12.5, "carbohydrate": 55.0, "fat": 9.0},
+        )
+        n = build(None, None, None, brand="Acme", name="Mystery Cereal", category="packaged_snacks")
+        assert sum(m["pct"] for m in n.macros) == pytest.approx(100.0, abs=0.05)
+
+    def test_sparse_ai_response_is_rejected(self, monkeypatch):
+        """Only one usable macro back - same 'don't trust a lone value' rule as label rows."""
+        monkeypatch.setattr(bedrock, "converse", lambda **kw: {"protein": 8.0})
+        assert build(None, None, None, brand="Acme", name="Mystery Item") is None
+
+    def test_llm_failure_degrades_to_no_nutrition_not_an_exception(self, monkeypatch):
+        def boom(**kw):
+            raise RuntimeError("quota exceeded")
+
+        monkeypatch.setattr(bedrock, "converse", boom)
+        assert build(None, None, None, brand="Acme", name="Mystery Item") is None
+
+    def test_never_attempted_when_a_real_source_already_worked(self, monkeypatch):
+        called = []
+        monkeypatch.setattr(bedrock, "converse", lambda **kw: called.append(kw) or {})
+        catalog = {"protein": 24.0, "carbohydrate": 50.0, "fat": 10.0}
+        n = build(None, None, catalog, brand="Everest", name="Garam Masala")
+        assert n.source == "catalog"
+        assert called == []

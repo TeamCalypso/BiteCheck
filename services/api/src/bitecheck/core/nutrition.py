@@ -1,7 +1,17 @@
 """Build the macros array that drives the web app particle swarm.
 
-Three sources in priority order: the extension's scraped label, Open Food Facts, then the
-curated catalog. Everything is normalized to per-100g.
+Four sources in priority order: the extension's scraped label, Open Food Facts, the
+curated catalog, then (last resort) an AI-estimated typical composition. Everything is
+normalized to per-100g.
+
+The AI-estimate fallback exists because the ~30 curated ASINs and Open Food Facts only
+cover a fraction of what a judge might paste into the web app. Without it, an unrecognized
+product just gets no swarm split at all. It is explicitly NOT a grounded regulator fact -
+it never touches `findings[]` or `core/grounding.py`'s guard, is always tagged
+`confidence="LOW"`/`source="ai_estimate"`, and adds an `AI_ESTIMATED_NUTRITION` flag so it
+can never be mistaken for a real label. It costs one extra cheap/fast-model call, but only
+on a cache miss where every real source has already failed - repeat views of the same
+product hit the DynamoDB cache and never re-trigger it.
 
 The one invariant the frontend depends on: pct values sum to exactly 100. Real labels
 never add up (water, ash, micronutrients, rounding), so an "other" bucket absorbs the
@@ -17,9 +27,14 @@ of total carbs, not the label's raw "Total Carbohydrate" figure.
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from typing import Any
+
+from bitecheck.clients import llm
+
+logger = logging.getLogger(__name__)
 
 # Order the swarm renders clusters in.
 MACRO_ORDER = ["protein", "carbohydrate", "sugar", "fat", "saturated_fat", "fiber", "sodium", "other"]
@@ -180,6 +195,69 @@ def _from_catalog(catalog_nutrition: dict[str, Any] | None) -> dict[str, float] 
     return raw or None
 
 
+_ESTIMATE_TOOL_SCHEMA = {
+    "type": "object",
+    "required": ["protein", "carbohydrate", "fat"],
+    "properties": {
+        "protein": {"type": "number", "description": "Typical grams of protein per 100g for this kind of food."},
+        "carbohydrate": {"type": "number", "description": "Typical grams of total carbohydrate per 100g."},
+        "sugar": {"type": ["number", "null"], "description": "Typical grams of sugar per 100g (a subset of carbohydrate), or null if not typically present."},
+        "fat": {"type": "number", "description": "Typical grams of total fat per 100g."},
+        "saturated_fat": {"type": ["number", "null"], "description": "A subset of fat, or null if not typically present."},
+        "fiber": {"type": ["number", "null"]},
+        "sodium": {"type": ["number", "null"], "description": "Typical grams of sodium per 100g."},
+    },
+}
+
+_ESTIMATE_SYSTEM_PROMPT = """\
+You estimate the TYPICAL per-100g macronutrient composition for a general category of food
+product, from general nutrition knowledge. You are not looking at this specific product's
+actual label or package - you have none - so give a plausible estimate for what this kind
+of food typically contains, the way a nutrition reference table would.
+
+Rules:
+- Base the estimate on the brand/product/category given, treating it as representative of
+  its food category in general (e.g. "a garam masala blend", "a whey protein powder").
+- Never refuse or return zeros because you lack the exact product - give your best
+  reasonable estimate for that category instead. This is explicitly an approximation, not a
+  claim about the specific package a shopper is holding.
+- Values must be plausible per-100g grams for a real food label in that category.
+"""
+
+
+def _from_gemini_estimate(brand: str | None, name: str | None, category: str | None) -> dict[str, float] | None:
+    """Last-resort fallback when no real label, Open Food Facts match, or catalog entry
+    exists - see the module docstring for why this is safe to have and what it is not."""
+    if not name:
+        return None
+
+    user_text = f"Product: {f'{brand} ' if brand else ''}{name}"
+    if category:
+        user_text += f"\nCategory: {category}"
+
+    try:
+        result = llm.converse(
+            kind="fast",
+            system=_ESTIMATE_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": [{"text": user_text}]}],
+            tool_schema=_ESTIMATE_TOOL_SCHEMA,
+        )
+    except Exception:
+        # Never let a nutrition-estimate failure fail the whole analyze request, and never
+        # let it retry/cascade - one attempt, then fall through to "no nutrition data".
+        logger.exception("AI nutrition estimate failed for name=%r", name)
+        return None
+
+    raw: dict[str, float] = {}
+    for key in ("protein", "carbohydrate", "sugar", "fat", "saturated_fat", "fiber", "sodium"):
+        value = result.get(key)
+        if isinstance(value, (int, float)) and value >= 0:
+            raw[key] = float(value)
+
+    core_present = sum(k in raw for k in ("protein", "carbohydrate", "fat"))
+    return raw if core_present >= 2 else None
+
+
 def _from_off_additives(off_payload: dict[str, Any] | None) -> list[dict[str, Any]]:
     """Additive tags from Open Food Facts, e.g. 'en:e951' -> {"ins": "E951", ...}.
 
@@ -268,14 +346,19 @@ def build(
     label_rows: list[dict[str, Any]] | None,
     off_payload: dict[str, Any] | None,
     catalog_nutrition: dict[str, Any] | None,
+    brand: str | None = None,
+    name: str | None = None,
+    category: str | None = None,
 ) -> Nutrition | None:
     """Resolve nutrition from the best available source. None when nothing is available.
 
     Source priority: extension-scraped label (HIGH confidence) -> Open Food Facts (MEDIUM)
-    -> curated catalog (MEDIUM). Never raises - a source that yields nothing just falls
-    through to the next one, and the caller gets None rather than an exception when every
-    source is empty (see handlers/analyze.py: a missing nutrition panel must not fail the
-    whole request).
+    -> curated catalog (MEDIUM) -> AI-estimated typical composition (LOW - see module
+    docstring). `brand`/`name`/`category` are only used for that last fallback, and are
+    optional so existing callers that don't have a normalized product yet are unaffected.
+    Never raises - a source that yields nothing just falls through to the next one, and the
+    caller gets None rather than an exception when every source is empty (see
+    handlers/analyze.py: a missing nutrition panel must not fail the whole request).
     """
     raw = _from_label_rows(label_rows)
     source, confidence = "amazon_label", "HIGH"
@@ -287,6 +370,10 @@ def build(
     if raw is None:
         raw = _from_catalog(catalog_nutrition)
         source, confidence = "catalog", "MEDIUM"
+
+    if raw is None:
+        raw = _from_gemini_estimate(brand, name, category)
+        source, confidence = "ai_estimate", "LOW"
 
     if not raw:
         return None
@@ -311,12 +398,19 @@ def build(
         if isinstance(ng, int) and 1 <= ng <= 4:
             nova_group = ng
 
+    flags = _derive_flags(raw)
+    if source == "ai_estimate":
+        flags.append({
+            "code": "AI_ESTIMATED_NUTRITION",
+            "label": "No label, catalog, or database match for this product - macros shown are a typical estimate, not this package's actual values.",
+        })
+
     return Nutrition(
         basis="per_100g",
         confidence=confidence,
         source=source,
         macros=macros,
-        flags=_derive_flags(raw),
+        flags=flags,
         additives=_from_off_additives(off_payload),
         nova_group=nova_group,
     )

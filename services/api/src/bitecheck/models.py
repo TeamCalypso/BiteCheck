@@ -28,10 +28,10 @@ MacroKey = Literal[
 ]
 MacroClass = Literal["GOOD", "NEUTRAL", "WATCH", "UNKNOWN"]
 AdditiveRisk = Literal["OK", "WATCH", "AVOID"]
-NutritionSource = Literal["amazon_label", "openfoodfacts", "catalog", "none"]
+NutritionSource = Literal["amazon_label", "openfoodfacts", "catalog", "ai_estimate", "none"]
 FlagCode = Literal[
     "CLAIM_MISMATCH", "ADDED_SUGAR_HIGH", "SODIUM_HIGH", "SATFAT_HIGH",
-    "ULTRA_PROCESSED", "INCOMPLETE_LABEL",
+    "ULTRA_PROCESSED", "INCOMPLETE_LABEL", "AI_ESTIMATED_NUTRITION",
 ]
 
 

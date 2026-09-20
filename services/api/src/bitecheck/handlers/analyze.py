@@ -152,7 +152,12 @@ def _run_pipeline(body: dict[str, Any]) -> dict[str, Any]:
         logger.exception("Open Food Facts lookup failed for asin=%s", asin)
 
     nutrition_result = nutrition.build(
-        extracted.get("nutritionTable"), off_payload, catalog_entry.get("nutrition")
+        extracted.get("nutritionTable"),
+        off_payload,
+        catalog_entry.get("nutrition"),
+        brand=normalized.brand,
+        name=normalized.name,
+        category=normalized.category,
     )
 
     # --- 6. retrieve --------------------------------------------------------------------

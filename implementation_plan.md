@@ -79,10 +79,22 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 - [x] `core/normalizer.py` (entity extraction + food gate, via `clients/llm.py`'s
       provider dispatch) — unit-tested with mocks, **and verified live against real
       Gemini**: correctly extracted brand/category/confidence from a real product title
-- [x] `clients/openfoodfacts.py` + `core/nutrition.py` (label → OFF → catalog, per-100g,
-      `other` remainder math, sugar/sat-fat netted out of their parent macro) — fully
-      implemented, unit-tested, and confirmed working live (real Open Food Facts data in
-      a real response)
+- [x] `clients/openfoodfacts.py` + `core/nutrition.py` (label → OFF → catalog → AI estimate,
+      per-100g, `other` remainder math, sugar/sat-fat netted out of their parent macro) —
+      fully implemented, unit-tested (167 tests now, +7 for the new fallback), and
+      confirmed working live (real Open Food Facts data in a real response)
+- [x] Added a 4th nutrition fallback, `core/nutrition.py::_from_gemini_estimate()`: when a
+      product has no extension-scraped label, no Open Food Facts match, and no seed-catalog
+      entry (i.e. any product a judge pastes that isn't one of Mahek's ~30 ASINs), ask the
+      active LLM for a typical per-100g estimate so the web app's swarm still splits instead
+      of showing nothing. Tagged `confidence="LOW"`/`source="ai_estimate"` plus a new
+      `AI_ESTIMATED_NUTRITION` flag so it's never mistaken for a real label — and it never
+      touches `findings[]` or the grounding guard, so the zero-hallucination safety
+      guarantee is untouched. Cost-checked: only fires on a cache miss where every real
+      source already failed, uses the cheap/fast model (same one `normalize()` already
+      calls), and is cached for 24h afterward like the rest of the response — verified live
+      against real Gemini with a deliberately obscure fictional product (plausible macros,
+      summed to exactly 100%).
 - [x] `core/rag.py::retrieve()` — dispatches to Bedrock Retrieve or
       `core/local_retrieval.py` (brand/keyword matching, no embeddings) based on
       `AI_PROVIDER`. **Verified live**: correctly surfaced the real FoSCoS recall for a
@@ -128,9 +140,11 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 
 - [x] `handlers/grievance.py` implemented (moved up — see Phase 2)
 - [x] `handlers/trending.py` implemented (moved up — see Phase 2)
-- [ ] `handlers/ingest.py` implemented, `DailySync` schedule flipped to `Enabled: true`
-      (still first on the cut list if time is short — see below)
-- [ ] `alternatives[]` populated from the catalog
+- [x] ~~`handlers/ingest.py` implemented, `DailySync` schedule flipped to `Enabled: true`~~
+      — **decided to cut.** Not needed for the demo; the corpus is already loaded and
+      static, so a daily refresh job has nothing to prove for judging.
+- [ ] `alternatives[]` populated from the catalog — **explicitly deprioritized for now**;
+      revisit only if time remains after Phase 6
 - [x] Error/empty/not-food states verified on both surfaces — **Ritvik confirms verified**
 - [x] ~~Tighten `infra/template.yaml`'s `AllowedOrigin`~~ — **decided not needed.** The
       extension is only being loaded unpacked for the demo, never published, so
@@ -152,7 +166,7 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 
 ## Cut list, in priority order, if time runs short
 
-1. `handlers/ingest.py` scheduling
+1. ~~`handlers/ingest.py` scheduling~~ — cut, decided Sept 20
 2. `alternatives[]`
 
 (`handlers/grievance.py` and `handlers/trending.py` are already done, so they're off this

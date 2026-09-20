@@ -149,7 +149,7 @@
         "confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
         "source": {
           "type": "string",
-          "enum": ["amazon_label", "openfoodfacts", "catalog", "none"]
+          "enum": ["amazon_label", "openfoodfacts", "catalog", "ai_estimate", "none"]
         },
         "macros": {
           "type": "array",
@@ -197,7 +197,8 @@
                   "SODIUM_HIGH",
                   "SATFAT_HIGH",
                   "ULTRA_PROCESSED",
-                  "INCOMPLETE_LABEL"
+                  "INCOMPLETE_LABEL",
+                  "AI_ESTIMATED_NUTRITION"
                 ]
               },
               "label": { "type": "string" }
