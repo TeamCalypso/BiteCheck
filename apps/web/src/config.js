@@ -3,8 +3,10 @@
  * Mirrors status colors, severity order, and macro class colors from contract and docs/ui-ux-brief.md.
  */
 
-// Reads Vite env variable, fallback to relative /v1 for dev proxy or local SAM / production API Gateway
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// Reads Vite env variable, fallback to live API Gateway URL
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod';
 
 export const ENDPOINTS = {
   ANALYZE: `${API_BASE_URL}/v1/analyze`,

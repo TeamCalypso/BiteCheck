@@ -1,5 +1,5 @@
 // UI Controller for BiteCheck: Search, Scanning HUD, Grounded Findings & FoSCoS Grievance
-import { analyzeProduct, fetchTrending, draftGrievance, extractAsin } from '../api/client.js';
+import { analyzeProduct, fetchTrending, draftGrievance, extractAsin, isValidAmazonUrl } from '../api/client.js';
 import { PARTICLE_STATES } from '../particles/particleEngine.js';
 import { STATUS_COLORS, STATUS_LABELS, MACRO_CLASS_COLORS, ADDITIVE_RISK_COLORS } from '../config.js';
 
@@ -7,6 +7,9 @@ export function setupUI(engine) {
   // Navigation & Controls
   const topBar = document.getElementById('top-bar');
   const searchSection = document.getElementById('search-section');
+  const searchCapsule = document.getElementById('search-capsule');
+  const searchErrorMsg = document.getElementById('search-error-msg');
+  const searchErrorText = document.getElementById('search-error-text');
   const linkInput = document.getElementById('link-input');
   const clearInputBtn = document.getElementById('clear-input-btn');
   const submitBtn = document.getElementById('submit-btn');
@@ -73,6 +76,29 @@ export function setupUI(engine) {
   let currentAnalysis = null;
   let pipelineTimer = null;
 
+  function showInputError(message) {
+    if (searchCapsule) {
+      searchCapsule.classList.remove('has-error');
+      void searchCapsule.offsetWidth; // Force reflow to restart animation
+      searchCapsule.classList.add('has-error');
+    }
+    if (searchErrorMsg && searchErrorText) {
+      searchErrorText.textContent = message || 'Please enter a valid Amazon product link (e.g. amazon.in/dp/B0...)';
+      searchErrorMsg.style.display = 'flex';
+    }
+    linkInput.focus();
+    linkInput.select();
+  }
+
+  function clearInputError() {
+    if (searchCapsule) {
+      searchCapsule.classList.remove('has-error');
+    }
+    if (searchErrorMsg) {
+      searchErrorMsg.style.display = 'none';
+    }
+  }
+
   // 1. Engine Callbacks & Intro Sequencer
   engine.onIntroComplete = () => {
     topBar.classList.add('visible');
@@ -80,14 +106,16 @@ export function setupUI(engine) {
     setTimeout(() => linkInput.focus(), 300);
   };
 
-  // Input Clear Button toggle
+  // Input Clear Button toggle & Error Reset
   linkInput.addEventListener('input', () => {
+    clearInputError();
     clearInputBtn.style.display = linkInput.value.trim() ? 'flex' : 'none';
   });
 
   clearInputBtn.addEventListener('click', () => {
     linkInput.value = '';
     clearInputBtn.style.display = 'none';
+    clearInputError();
     linkInput.focus();
   });
 
@@ -108,6 +136,7 @@ export function setupUI(engine) {
       molecularHud.classList.remove('visible');
       scanningHud.classList.remove('visible');
       searchSection.classList.remove('moved-up');
+      clearInputError();
       linkInput.value = '';
       clearInputBtn.style.display = 'none';
       setTimeout(() => linkInput.focus(), 500);
@@ -159,9 +188,15 @@ export function setupUI(engine) {
    * Main Trigger: Reads input and runs inspection
    */
   async function triggerAnalysis() {
+    clearInputError();
     const url = linkInput.value.trim();
     if (!url) {
-      linkInput.focus();
+      showInputError('Please paste an Amazon India product link to inspect.');
+      return;
+    }
+
+    if (!isValidAmazonUrl(url)) {
+      showInputError('Invalid link. Please paste a valid Amazon product link with an ASIN (e.g. https://www.amazon.in/dp/B0...).');
       return;
     }
 
@@ -175,8 +210,9 @@ export function setupUI(engine) {
       displayResults(response.data);
     } catch (err) {
       stopScanningSequence();
-      alert(`Analysis failed: ${err.message}`);
+      searchSection.classList.remove('moved-up');
       engine.transitionToAmbient();
+      showInputError(err.message || 'Analysis failed. Please check the link and try again.');
     }
   }
 

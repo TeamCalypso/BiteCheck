@@ -282,6 +282,53 @@ html, body {
   box-shadow: var(--shadow-card), 0 0 35px -5px rgba(56, 189, 248, 0.35);
 }
 
+#search-capsule.has-error {
+  border-color: rgba(244, 63, 94, 0.8) !important;
+  box-shadow: 0 0 25px -4px rgba(244, 63, 94, 0.45) !important;
+  animation: capsule-shake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes capsule-shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+.search-error-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  color: #fda4af;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  animation: error-fade-in 0.25s ease-out;
+}
+
+@keyframes error-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-error-msg svg {
+  flex-shrink: 0;
+  color: #fb7185;
+}
+
 .input-icon-prefix {
   color: var(--text-muted);
   display: flex;

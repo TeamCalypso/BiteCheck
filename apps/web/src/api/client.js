@@ -57,13 +57,20 @@ export async function analyzeProduct(url, options = {}) {
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.message || `API returned HTTP ${res.status}`);
+      const message = errBody.message || errBody.error || `API returned HTTP ${res.status}`;
+      const apiErr = new Error(message);
+      apiErr.isApiError = true;
+      throw apiErr;
     }
 
     const data = await res.json();
     return { data, source: 'live' };
   } catch (err) {
     clearTimeout(timer);
+
+    if (err.isApiError) {
+      throw err;
+    }
 
     // Do NOT silently substitute fabricated data for a real answer here - this path runs
     // for any real product a user pastes, and returning a confident-looking fake verdict

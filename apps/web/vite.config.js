@@ -5,7 +5,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/v1': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:3000',
+        target: process.env.VITE_API_BASE_URL || 'https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod',
         changeOrigin: true,
         secure: false,
       },
