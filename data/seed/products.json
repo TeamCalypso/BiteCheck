@@ -1,1 +1,191 @@
-[]
+[
+  {
+    "asin": "B00XBPX0PI",
+    "brand": "Eastern",
+    "name": "Chilly Paprika Powder",
+    "category": "spices_blends",
+    "netQuantity": "500 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B00ZWHQK9Q",
+    "brand": "Vasant",
+    "name": "Kumthi Kashmiri Chilli Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0152ROOE8",
+    "brand": "Everest",
+    "name": "Kashmirilal Brilliant Red Chilli Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B01BHTKM7S",
+    "brand": "MDH",
+    "name": "Lal Mirch Vegetable Masala Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B00NR8CVL8",
+    "brand": "Everest",
+    "name": "Garam Masala Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B002XH1BXI",
+    "brand": "MDH",
+    "name": "Garam Masala",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B01B7DZ0BW",
+    "brand": "Catch",
+    "name": "Turmeric Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B00NBSC2B8",
+    "brand": "Everest",
+    "name": "Turmeric Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B07BH3LNSG",
+    "brand": "Tata Sampann",
+    "name": "Chilli Powder",
+    "category": "spices_blends",
+    "netQuantity": "500 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B01CHIKEHG",
+    "brand": "Eastern",
+    "name": "Super Garam Masala Powder",
+    "category": "spices_blends",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B073QVQMXQ",
+    "brand": "Everest",
+    "name": "Tikhalal Chilli Powder",
+    "category": "spices_blends",
+    "netQuantity": "200 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0GDR2PWK1",
+    "brand": "Fortune",
+    "name": "Premio Cold Pressed Mustard Oil",
+    "category": "oils_fats",
+    "netQuantity": "1 L",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B094V6TDSG",
+    "brand": "Epigamia",
+    "name": "Fruit Yogurt Mango",
+    "category": "dairy_perishable",
+    "netQuantity": "75 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B078211DGR",
+    "brand": "Amul",
+    "name": "Lassi",
+    "category": "dairy_perishable",
+    "netQuantity": "250 ml",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B01IA424ZQ",
+    "brand": "GO Cheese",
+    "name": "Cheese Slices",
+    "category": "dairy_perishable",
+    "netQuantity": "100 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B00O8X9B3W",
+    "brand": "Nestlé",
+    "name": "MILKMAID Sweetened Condensed Milk",
+    "category": "dairy_perishable",
+    "netQuantity": "380 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0D9BHX9MZ",
+    "brand": "Wellcore",
+    "name": "Pure Micronised Creatine",
+    "category": "supplements_protein",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0D1VJ3C7R",
+    "brand": "Optimum Nutrition",
+    "name": "Gold Standard 100% Whey",
+    "category": "supplements_protein",
+    "netQuantity": "907 g",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0DSG4K882",
+    "brand": "Avvatar",
+    "name": "Performance Protein",
+    "category": "supplements_protein",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0963KR1YW",
+    "brand": "Phab",
+    "name": "Protein Bars Chocolate Brownie",
+    "category": "supplements_protein",
+    "netQuantity": "Pack of 12",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0754FH6YF",
+    "brand": "Parle",
+    "name": "Parle-G Glucose Biscuits",
+    "category": "packaged_snacks",
+    "netQuantity": "65 g x 24",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B005HSOWDQ",
+    "brand": "Haldiram's",
+    "name": "Nagpur Aloo Bhujia",
+    "category": "packaged_snacks",
+    "netQuantity": "1 kg",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B01MR86B57",
+    "brand": "Lay's",
+    "name": "India's Magic Masala",
+    "category": "packaged_snacks",
+    "netQuantity": "95 g x 3",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B0F8HP1HBR",
+    "brand": "Noise",
+    "name": "Master Buds Max",
+    "category": "non_food",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  },
+  {
+    "asin": "B002U1ZBG0",
+    "brand": "SanDisk",
+    "name": "Cruzer Blade USB 2.0 Flash Drive",
+    "category": "non_food",
+    "netQuantity": "16 GB",
+    "notes": "Demo catalog entry for the Sept 20 submission."
+  }
+]
