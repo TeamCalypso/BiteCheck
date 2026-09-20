@@ -22,42 +22,48 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
       scaffolded with real CLI shape and TODOs
 - [x] Docs: PRD, TRD, app-flow, ui-ux-brief, backend-schema, data-sources, demo-script
 - [x] Push to `github.com/TeamCalypso/BiteCheck`, confirm repo is **public**
-- [ ] Saket: AWS account verified but showing **$0 credits** on two accounts so far (see
-      note below) — Bedrock model access still blocked on this. **Currently the critical
-      path blocker for everything in Phase 1.**
-- [ ] Ritvik: pull this scaffold, start the Vite + React + TS + R3F project in `apps/web/`
-      against `contract/fixtures/*.json`; also owns `apps/extension/` (MV3 Chrome
-      extension) — see `apps/extension/README.md` for the handoff brief (contract, the
-      Shadow DOM requirement, SPA-nav handling). An earlier draft of the extension was
-      written by Saket and removed on Sept 20 — ownership moved to match `CLAUDE.md`,
-      which always specified `apps/extension/` as frontend, not backend
-- [ ] Mahek + Saket: start pulling the first ~20 source documents into `data/sources/` per
-      `docs/data-sources.md`
+- [x] Saket: AWS account eventually got $140 credits, but **Bedrock invocation remains
+      blocked account-wide** by an AWS-side "account currently being verified" hold —
+      ruled out IAM, SCPs, region, quotas, and model type as the cause (see `docs/TRD.md`'s
+      "Region & account" section). Support case filed. **No longer the critical path
+      blocker** — see the AI provider pivot below, which unblocked everything else.
+- [x] Ritvik: `apps/web/` built (vanilla JS + three.js, not React/R3F as originally
+      planned — a fine simplification, docs corrected) and **live on Amplify Hosting**.
+      `apps/extension/` built too — see `apps/extension/README.md` for the original
+      handoff brief.
+- [x] Mahek: sourced and merged FSSAI labelling regulation + 205 FoSCoS recall records
+      (PRs #1, #2) — this became the real, live knowledge base once the AI provider
+      pivoted to local retrieval (see Phase 1).
 
-> **AWS account status (Sept 20):** original account verified but shows $0 available
-> credits (likely excluded from new-account promos since it was created long ago, even
-> though only just verified). Hackathon's $100 team credit form submitted, coupon email
-> not yet received. Pivoting to a second, genuinely new AWS account on a separate email,
-> plus checking AWS Educate. Real project cost is small (<$10 total per `docs/TRD.md`) so
-> once *any* account has a verified payment method, we are unblocked even without credits
-> — Bedrock is the only pay-from-token-one service in our stack; everything else is
-> free-tier.
+> **AI provider pivot (Sept 20):** Bedrock access never cleared in time. Per the hackathon
+> organizer's own guidance ("Bedrock is not mandatory... use whatever other AI tools you
+> like, the only thing we ask is that you deploy on AWS"), pivoted to **Google Gemini**
+> (`gemini-3.5-flash` / `gemini-3.5-flash-lite`, free tier) for the LLM calls, and to a
+> **local brand/keyword retrieval** module (`core/local_retrieval.py`) over a bundled
+> corpus index instead of Bedrock Knowledge Bases — no embeddings needed at ~250 documents
+> each already tagged with real brand names. **Nothing Bedrock-related was deleted** —
+> `clients/bedrock.py` and the Bedrock retrieval path in `core/rag.py` are fully intact,
+> dispatched via an `AI_PROVIDER` config flag. Flipping back is a one-parameter change if
+> Bedrock access ever clears. See `docs/TRD.md`'s "AI provider" section for the full story.
+>
+> This is now **verified working end-to-end on live AWS**: a real product title through
+> Gemini normalization → local retrieval against the real corpus → Gemini verdict
+> generation → the grounding guard → a correctly cited, real FSSAI recall finding. Not a
+> fixture, not a demo shortcut — genuine RAG over genuine regulator data.
 
 ## Phase 1 — Knowledge base + API skeleton
 
 - [x] Mahek: FSSAI labelling regulation + 205 FoSCoS recall records merged into
-      `data/corpus/` (PRs #1, #2) — format verified against the contract, ready for
-      ingestion the moment `bootstrap_kb.py` can run
-- [ ] Saket: `scripts/bootstrap_kb.py` fully implemented (S3 Vectors, IAM role, KB,
-      data source, ingestion — see the file itself). **Still blocked on Bedrock access** —
-      AWS-side "account currently being verified" hold, escalated via support case +
-      aws-verification@amazon.com. See `docs/TRD.md`'s Region & account section for the
-      full investigation (ruled out IAM/SCPs/region/quotas/model type).
-- [x] Saket: `sam deploy` — **live, Sept 20.** Deployed with placeholder Bedrock
-      parameters (`PENDING-BEDROCK-ACCESS`) since there's no real KB yet:
-      https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod . `/v1/health` and
-      `/v1/trending` confirmed working against real AWS; `/v1/analyze` and
-      `/v1/grievance` will 500 until the placeholders are swapped for real values
+      `data/corpus/` (PRs #1, #2) — bundled into `services/api/src/bitecheck/data/
+      corpus_index.json` via `scripts/build_corpus_index.py` and serving as the real,
+      live knowledge base (local retrieval, not Bedrock KB — see the pivot note above)
+- [ ] `scripts/bootstrap_kb.py` — written and ready, but not run: no longer on the
+      critical path since the AI provider pivot. Would only matter again if Bedrock
+      access clears and we switch back.
+- [x] Saket: `sam deploy` — **live, Sept 20**, now with real Gemini configuration:
+      https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod . All four routes
+      (`/v1/health`, `/v1/trending`, `/v1/analyze`, `/v1/grievance`) confirmed working
+      against real AWS with real Gemini calls.
 - [x] Ritvik: idle-state swarm rendering, wired to fixtures
 - [x] Ritvik: **Amplify Hosting live**, Sept 20:
       https://main.d3koyuekptkg0v.amplifyapp.com , `VITE_API_BASE_URL` wired to the
@@ -70,25 +76,30 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 - [x] `scripts/seed_dynamo.py::seed()` implemented and smoke-tested (moto) — including a
       float→Decimal fix that would otherwise have crashed on first real run.
       `data/seed/products.json` still needs the ~30 real ASINs filled in (Saket + Mahek)
-- [x] `core/normalizer.py` (Bedrock Converse entity extraction + food gate) — written,
-      unit-tested with a mocked Bedrock call. Real correctness (does it actually normalize
-      well) can only be confirmed once Bedrock access exists
+- [x] `core/normalizer.py` (entity extraction + food gate, via `clients/llm.py`'s
+      provider dispatch) — unit-tested with mocks, **and verified live against real
+      Gemini**: correctly extracted brand/category/confidence from a real product title
 - [x] `clients/openfoodfacts.py` + `core/nutrition.py` (label → OFF → catalog, per-100g,
       `other` remainder math, sugar/sat-fat netted out of their parent macro) — fully
-      implemented and unit-tested, including the float-formatting bug caught by tests
-- [x] `core/rag.py::retrieve()` (bedrock-agent-runtime Retrieve) — written, correctness
-      pending real Bedrock access to verify against
-- [x] `core/verdict.py::assess()` (Converse, strict schema) — written and unit-tested with
-      a mocked Bedrock call; `score_from_findings()` recomputes the score post-grounding
-- [x] `handlers/analyze.py` wired end-to-end — full pipeline integration-tested with
-      Bedrock/Open Food Facts faked and DynamoDB via moto; response validated against
-      `contract/analyze.schema.json` in the test itself. Caught and fixed a real schema
-      violation (`meta.latencyMs` was `null` on the not-food path) before it could ship
-- [x] `handlers/trending.py`, `handlers/grievance.py` implemented and unit-tested (moved up
-      from Phase 5 since they were quick once analyze.py's plumbing existed)
-- [ ] Mahek: prompt iteration against real demo ASINs; corpus to 40+ docs; re-sync KB —
-      **blocked on AWS account access**
-- [x] `pytest` coverage: **132 passing, 1 skipped**, zero AWS account required to run any
+      implemented, unit-tested, and confirmed working live (real Open Food Facts data in
+      a real response)
+- [x] `core/rag.py::retrieve()` — dispatches to Bedrock Retrieve or
+      `core/local_retrieval.py` (brand/keyword matching, no embeddings) based on
+      `AI_PROVIDER`. **Verified live**: correctly surfaced the real FoSCoS recall for a
+      real product from the real 206-document corpus.
+- [x] `core/verdict.py::assess()` (strict schema, via `clients/llm.py`) — unit-tested,
+      **and verified live**: Gemini correctly produced a grounded CRITICAL verdict citing
+      the real recall, and the grounding guard passed it with 0 findings dropped
+- [x] `handlers/analyze.py` wired end-to-end — integration-tested (mocked) and now
+      **confirmed live on real AWS + real Gemini + real corpus data**, full response
+      shape, real batch number, real citation
+- [x] `handlers/trending.py`, `handlers/grievance.py` implemented, unit-tested, **and
+      grievance confirmed live** — produced a correctly formatted, correctly cited FoSCoS
+      complaint draft from a real cached analysis
+- [x] Mahek: prompt iteration against real demo ASINs is now genuinely possible any time
+      (Gemini + local retrieval are live) — no longer blocked on anything AWS-side;
+      corpus can keep growing via the existing PR workflow
+- [x] `pytest` coverage: **160 passing, 1 skipped**, zero AWS account required to run any
       of it (`cd services/api && python -m pytest -q`)
 
 ## Phase 3 — Surfaces
