@@ -45,14 +45,23 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 
 ## Phase 1 — Knowledge base + API skeleton
 
-- [ ] Mahek + Saket: `data/sources/` → `scripts/build_corpus.py` → `data/corpus/`, first 20 docs
-- [ ] Saket: implement `scripts/bootstrap_kb.py` for real — corpus bucket, S3 vector
-      bucket/index, Bedrock KB (`S3_VECTORS`), data source, first ingestion job; write
-      `infra/kb-outputs.json`. **Blocked on AWS account access.**
-- [ ] Saket: implement `clients/bedrock.py::resolve_model_ids()`, fill
-      `infra/samconfig.toml` parameters. **Blocked on AWS account access.**
-- [ ] Saket: `sam deploy` a first pass. **Get a live URL as soon as AWS is unblocked.**
+- [x] Mahek: FSSAI labelling regulation + 205 FoSCoS recall records merged into
+      `data/corpus/` (PRs #1, #2) — format verified against the contract, ready for
+      ingestion the moment `bootstrap_kb.py` can run
+- [ ] Saket: `scripts/bootstrap_kb.py` fully implemented (S3 Vectors, IAM role, KB,
+      data source, ingestion — see the file itself). **Still blocked on Bedrock access** —
+      AWS-side "account currently being verified" hold, escalated via support case +
+      aws-verification@amazon.com. See `docs/TRD.md`'s Region & account section for the
+      full investigation (ruled out IAM/SCPs/region/quotas/model type).
+- [x] Saket: `sam deploy` — **live, Sept 20.** Deployed with placeholder Bedrock
+      parameters (`PENDING-BEDROCK-ACCESS`) since there's no real KB yet:
+      https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod . `/v1/health` and
+      `/v1/trending` confirmed working against real AWS; `/v1/analyze` and
+      `/v1/grievance` will 500 until the placeholders are swapped for real values
 - [x] Ritvik: idle-state swarm rendering, wired to fixtures
+- [x] Ritvik: **Amplify Hosting live**, Sept 20:
+      https://main.d3koyuekptkg0v.amplifyapp.com , `VITE_API_BASE_URL` wired to the
+      real API above. Confirmed loading cleanly, no console errors.
 
 ## Phase 2 — Real analysis engine
 
@@ -107,7 +116,12 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
       (still first on the cut list if time is short — see below)
 - [ ] `alternatives[]` populated from the catalog
 - [ ] Error/empty/not-food states verified on both surfaces
-- [ ] CORS verified from the Amplify origin and from `https://www.amazon.in`
+- [ ] Tighten `infra/template.yaml`'s `AllowedOrigin` from `*` to the real origins, **once
+      Ritvik's extension has a real ID** (it's `chrome-extension://<id>`, only assigned
+      once loaded in Chrome — narrowing CORS before we know it would risk breaking the
+      extension's API calls with no way to test it ourselves). Needs both the Amplify
+      origin and the extension ID added, then a redeploy. Do this last, deliberately,
+      not as an afterthought right before the demo.
 
 ## Phase 6 — Submission
 

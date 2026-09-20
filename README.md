@@ -9,7 +9,10 @@ shows a grounded verdict with the exact circular or order reference, right on th
 Built for the **WeMakeDevs × AWS First Commit** hackathon (Sept 17–20, 2026), **Ship It**
 track.
 
-- **Live web app:** _add the Amplify URL here once deployed_
+- **Live web app:** https://main.d3koyuekptkg0v.amplifyapp.com
+- **Live API:** https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod (`/v1/health`,
+  `/v1/trending` are fully live; `/v1/analyze` and `/v1/grievance` are deployed but will
+  error until Bedrock access clears — see `docs/TRD.md`'s Region & account section)
 - **Demo video:** _add the YouTube link here_
 - **Chrome extension:** load unpacked from `apps/extension/` (see below) — Chrome Web
   Store listing is out of scope for the hackathon deadline
