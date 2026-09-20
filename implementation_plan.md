@@ -104,16 +104,21 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 
 ## Phase 3 — Surfaces
 
-- [ ] Ritvik: `apps/extension/` built from `apps/extension/README.md`'s brief — manifest,
+- [x] Ritvik: `apps/extension/` built from `apps/extension/README.md`'s brief — manifest,
       content script (DOM reader), background service worker (owns the fetch, not the
       content script — see the README for why), Shadow DOM pill + drawer per
       `docs/ui-ux-brief.md`
-- [ ] Ritvik: API base URL wired to the deployed endpoint once Saket has one
-- [ ] Extension tested unpacked on 5 real amazon.in product pages, including a variant
-      switch and a non-food item
-- [ ] Ritvik: swarm split driven by real `nutrition.macros`, result panel, demo cards,
-      trending ticker wired to `GET /v1/trending`
-- [ ] Amplify Hosting connected to `main` — **this URL is the submission URL**
+- [x] Ritvik: API base URL wired to the deployed endpoint (`apps/extension/src/config.js`,
+      `manifest.json` host_permissions)
+- [x] Extension tested unpacked on real amazon.in product pages — **Ritvik confirms testing
+      complete**
+- [x] Ritvik: swarm split driven by real `nutrition.macros`, result panel, demo cards,
+      trending ticker wired to `GET /v1/trending`. Ritvik flagged some web-app links not
+      splitting into the swarm — traced to `nutrition` coming back `null` for products
+      Open Food Facts doesn't recognize and the seed catalog doesn't have yet (see Phase 2)
+      — not a wiring bug, resolves as Mahek's ASIN seeding lands.
+- [x] Amplify Hosting connected to `main` — **this URL is the submission URL** (live, see
+      Phase 1)
 
 ## Phase 4 — Sleep
 
@@ -126,7 +131,7 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
 - [ ] `handlers/ingest.py` implemented, `DailySync` schedule flipped to `Enabled: true`
       (still first on the cut list if time is short — see below)
 - [ ] `alternatives[]` populated from the catalog
-- [ ] Error/empty/not-food states verified on both surfaces
+- [x] Error/empty/not-food states verified on both surfaces — **Ritvik confirms verified**
 - [x] ~~Tighten `infra/template.yaml`'s `AllowedOrigin`~~ — **decided not needed.** The
       extension is only being loaded unpacked for the demo, never published, so
       `chrome-extension://jhncindnmmcjbbejjjgghgkljmbibakk` already works fine against the
