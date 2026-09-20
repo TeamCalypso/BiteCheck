@@ -1,4 +1,6 @@
-# BiteCheck
+# BiteCheck 
+<img width="235" height="160.3" alt="image" src="https://github.com/user-attachments/assets/f5d0d3a1-f283-43ca-b58f-dc39354bf23a" />
+
 
 A food-safety layer over Indian e-commerce. FSSAI bans, lab-test failures, and recall
 notices for adulterated spices, unapproved protein powders, and mislabeled products exist
@@ -16,6 +18,13 @@ track.
 - **Demo video:** _add the YouTube link here_
 - **Chrome extension:** load unpacked from `apps/extension/` (see below) — Chrome Web
   Store listing is out of scope for the hackathon deadline
+
+  <img width="1045" height="306" alt="image" src="https://github.com/user-attachments/assets/d8b96121-b538-4d41-b426-8252fc9dbd7d" />
+  <img width="838" height="253" alt="image" src="https://github.com/user-attachments/assets/2b28d351-defc-4cd5-a0aa-d21017bb378f" />
+  <img width="967" height="308" alt="image" src="https://github.com/user-attachments/assets/1c122dea-0463-4918-8b6a-ba30917845ee" />
+  <img width="874" height="180" alt="image" src="https://github.com/user-attachments/assets/e4333d1c-fc69-4566-8ea0-9680cae524f1" />
+  <img width="1002" height="325" alt="image" src="https://github.com/user-attachments/assets/e6a9c32c-0119-47c0-993a-c40bf504158f" />
+
 
 ## What it does
 
@@ -188,6 +197,40 @@ Live end-to-end on real AWS: backend (Lambda + API Gateway + DynamoDB) deployed,
 live on Amplify Hosting, all four API routes working with real Gemini calls and real
 grounded FSSAI/FoSCoS citations, 160 backend tests passing. See `implementation_plan.md`
 for the full step tracker and what's left before submission.
+
+## Frontend & 3D Particle Visualization Engine
+The BiteCheck web client (`apps/web/`) is built with **Vite**, **Vanilla JS/CSS**, and a custom **Three.js WebGL Particle Engine** that turns dry nutritional and regulatory data into an interactive, physics-driven molecular simulation.
+### <img width="1000" height="563" alt="Frontend initial (1)" src="https://github.com/user-attachments/assets/87edc4a1-ad32-4720-9167-8dc7bf6b7f8d" />
+
+### 3D Particle Engine Highlights
+* **36,000 GPU-Accelerated Particles:** High-performance particle simulation running at 60 FPS via custom GLSL vertex and fragment shaders with real-time sphere normal mapping, diffuse directional lighting, and rim-light Fresnel shading.
+* **GPU Fluid Turbulence:** Custom vertex-shader procedural noise creates fluid, organic wave turbulence and breathing motion across all particle states.
+* **Proportional Macronutrient Partitioning:** When an Amazon product is analyzed, particles dynamically subdivide into up to 8 isolated molecular clusters whose volumes directly match the product's actual macronutrient breakdown (Proteins, Carbs, Fats, Fiber, Sugars, Sodium, etc.).
+* **Semantic Colorization & Shading:** Smooth shader interpolation transitions particles from ambient pearl-slate to distinct semantic nutritional color palettes (e.g., emerald for protein, amber for carbs, crimson for fats).
+* **State-Driven Particle Lifecycle:**
+  * `INTRO_SWIRL` → `INTRO_LOGO` (assembles BiteCheck 3D brandmark & typography) → `INTRO_DISPERSE` (dissolves into ambient space).
+  * `AMBIENT`: Physics-based cursor interaction with real-time mouse repulsion and 3D camera parallax.
+  * `SCANNING`: Concentric orbital compression and high-energy particle beams while the backend Bedrock pipeline executes.
+  * `MOLECULES`: Autonomous orbital rotation of macro clusters with interactive focus and inspection.
+  * `NOT_FOOD`: Rejection scatter dynamics when non-food items or unparseable URLs are detected.
+### <img width="1000" height="563" alt="Frontend second (1)" src="https://github.com/user-attachments/assets/60ae7873-90c8-4ef2-adce-4d36c09ce5c5" />
+### Frontend UI & HUD Architecture
+* **Cinematic Camera Framing:** Dynamic lerped camera transitions that seamlessly pan, zoom, and frame the 3D particle bay as the inspection drawer opens and closes.
+* **Clinical Glassmorphic HUD:** Dark-mode interface designed with deep obsidian tones, neon telemetry accents, and crisp typography (Inter + JetBrains Mono).
+* **Instant URL & ASIN Resolver:** One-click sample product pills and live Amazon.in URL parser triggering instantaneous query normalization.
+* **Inspection Bay & Safety Drawer:** Displays grounded FSSAI recall notices, violation severity pills, allergen warnings, full macro/micro breakdown, and a one-click FoSCoS grievance draft.
+* **Zero Bloat, Maximum Speed:** Pure Vanilla CSS and ES modules bundled with Vite for ultra-low latency and instant cold loads on AWS Amplify.
+
+## News Sources
+https://www.livemint.com/market/stock-market-news/nestle-india-share-price-falls-3-fssai-takes-legal-action-over-3-baby-products-11789718539721.html
+
+https://www.livemint.com/market/stock-market-news/nestle-india-share-price-falls-3-fssai-takes-legal-action-over-3-baby-products-11789718539721.html
+
+https://www.livemint.com/companies/news/fssai-issues-prohibition-order-against-dabur-over-100-claims-11785776838584.html
+
+https://www.livemint.com/companies/news/fssai-issues-prohibition-order-against-dabur-over-100-claims-11785776838584.html
+
+https://www.news18.com/photogallery/viral/everest-spices-fail-quality-tests-what-is-enterobacteriaceae-bacteria-and-why-is-it-concerning-aa-ws-l-9952333.html
 
 ## License
 
