@@ -1,7 +1,7 @@
 // BiteCheck Extension Configuration & UI Tokens
 // Shared color semantics specified in docs/ui-ux-brief.md
 
-export const DEFAULT_API_URL = 'http://localhost:8000';
+export const DEFAULT_API_URL = 'https://5607b13rz9.execute-api.us-east-1.amazonaws.com/prod';
 
 export const STATUS_COLORS = {
   CRITICAL: '#DC2626',

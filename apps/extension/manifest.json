@@ -22,6 +22,7 @@
   ],
   "host_permissions": [
     "https://www.amazon.in/*",
+    "https://5607b13rz9.execute-api.us-east-1.amazonaws.com/*",
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*"
   ],
