@@ -19,6 +19,13 @@ track.
 - **Chrome extension:** load unpacked from `apps/extension/` (see below) — Chrome Web
   Store listing is out of scope for the hackathon deadline
 
+  <img width="1045" height="306" alt="image" src="https://github.com/user-attachments/assets/d8b96121-b538-4d41-b426-8252fc9dbd7d" />
+  <img width="838" height="253" alt="image" src="https://github.com/user-attachments/assets/2b28d351-defc-4cd5-a0aa-d21017bb378f" />
+  <img width="967" height="308" alt="image" src="https://github.com/user-attachments/assets/1c122dea-0463-4918-8b6a-ba30917845ee" />
+  <img width="874" height="180" alt="image" src="https://github.com/user-attachments/assets/e4333d1c-fc69-4566-8ea0-9680cae524f1" />
+  <img width="1002" height="325" alt="image" src="https://github.com/user-attachments/assets/e6a9c32c-0119-47c0-993a-c40bf504158f" />
+
+
 ## What it does
 
 Two surfaces, one backend:
@@ -214,6 +221,16 @@ The BiteCheck web client (`apps/web/`) is built with **Vite**, **Vanilla JS/CSS*
 * **Inspection Bay & Safety Drawer:** Displays grounded FSSAI recall notices, violation severity pills, allergen warnings, full macro/micro breakdown, and a one-click FoSCoS grievance draft.
 * **Zero Bloat, Maximum Speed:** Pure Vanilla CSS and ES modules bundled with Vite for ultra-low latency and instant cold loads on AWS Amplify.
 
+## News Sources
+https://www.livemint.com/market/stock-market-news/nestle-india-share-price-falls-3-fssai-takes-legal-action-over-3-baby-products-11789718539721.html
+
+https://www.livemint.com/market/stock-market-news/nestle-india-share-price-falls-3-fssai-takes-legal-action-over-3-baby-products-11789718539721.html
+
+https://www.livemint.com/companies/news/fssai-issues-prohibition-order-against-dabur-over-100-claims-11785776838584.html
+
+https://www.livemint.com/companies/news/fssai-issues-prohibition-order-against-dabur-over-100-claims-11785776838584.html
+
+https://www.news18.com/photogallery/viral/everest-spices-fail-quality-tests-what-is-enterobacteriaceae-bacteria-and-why-is-it-concerning-aa-ws-l-9952333.html
 
 ## License
 
