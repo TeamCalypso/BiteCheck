@@ -6,31 +6,42 @@ disposable step tracker.
 
 ## Region & account
 
-**`ap-south-1` (Mumbai).**
+**`us-east-1`.** This flip-flopped twice during the build — worth recording the full story
+since whoever picks this up next (including us, if the account situation changes) shouldn't
+repeat the investigation:
 
-Started as `us-east-1` earlier in the build, out of caution: at the time, Amazon S3
-Vectors' availability in Mumbai was unconfirmed (initial research surfaced contradictory
-results), while `us-east-1` support was certain. Re-verified against the live AWS docs on
-Sept 20 and switched, because both blockers turned out to be cleared:
+1. **Started as `us-east-1`**, out of caution: at build time, Amazon S3 Vectors'
+   availability in Mumbai was unconfirmed (initial research surfaced contradictory
+   results), while `us-east-1` support was certain.
+2. **Switched to `ap-south-1` (Mumbai)** after re-verifying against live AWS docs: S3
+   Vectors is confirmed on AWS's current region list, and Claude models are reachable from
+   `ap-south-1` via Global/APAC cross-region inference profiles. On paper, strictly better —
+   lower latency for the actual (Indian) userbase, stronger "built for India" story.
+3. **Switched back to `us-east-1`** after direct testing turned up a real, account-specific
+   blocker documentation couldn't have shown us: `bedrock-runtime converse` and
+   `invoke-model` both fail in `ap-south-1` for this AWS account with a generic
+   `ValidationException: Operation not allowed` — reproduced via the CLI **and** the
+   console's own model playground, and reproduced on a first-party Amazon model (Nova
+   Micro, Titan Embeddings) as well as Claude, ruling out an Anthropic-specific cause.
+   Confirmed **not** an IAM permissions issue (`iam simulate-principal-policy` explicitly
+   returns `allowed` for `bedrock:InvokeModel`/`bedrock:Converse`) and **not** an
+   Organizations SCP (the account isn't an Organizations member at all). The same exact
+   call against `us-east-1` succeeds immediately. Best working theory: this account's
+   "Free plan" credit program only provisions Bedrock in `us-east-1` — but that's inferred,
+   not confirmed by AWS documentation, so **it's worth re-testing `ap-south-1` before
+   assuming it's permanently unusable**, in case this was a temporary account-provisioning
+   state rather than a hard limit.
 
-- **S3 Vectors is confirmed available in `ap-south-1`** — it's on AWS's current published
-  region list ([S3 Vectors regions and endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html)).
-- **Claude models are reachable from `ap-south-1`** via Global and APAC cross-region
-  inference profiles (`global.anthropic.*`, `apac.anthropic.*`) — AWS added this
-  specifically to give Indian customers access without routing through the US. Titan Text
-  Embeddings v2 was already confirmed available directly in `ap-south-1`.
+Practical upshot: `scripts/bootstrap_kb.py`'s `VERDICT_MODEL_CANDIDATES` still tries a
+`global.*` inference profile first (harmless to keep — it works from any source region),
+then falls back to `us.*` profiles and bare model IDs, which is what actually resolves
+successfully in `us-east-1` today.
 
-With both confirmed, Mumbai is strictly better for this project: lower latency for the
-actual (Indian) userbase on every cold-path request, and a stronger "built for India"
-story for judges. The model-ID resolution in `scripts/bootstrap_kb.py` picks
-`global.*` profiles first (work from any source region), then `apac.*` (keeps inference
-traffic within APAC), falling back to `us.*` and bare model IDs only if neither is
-available to the account — see that file's `VERDICT_MODEL_CANDIDATES` comment for the
-full ordering rationale.
-
-Bedrock model access (Claude + Nova + Titan Text Embeddings v2) must be requested via the
-Bedrock console, **with the console region set to `ap-south-1`** — model access is granted
-per-region, not account-wide — **before** anything else; approval is manual and can lag.
+Bedrock model access itself needed no separate request this round — AWS retired the manual
+"Model access" approval page; serverless foundation models now activate automatically on
+first invocation per-account. (First-time Anthropic use may still prompt for a short
+use-case form somewhere in that flow; we didn't hit it, possibly because Claude 3 Haiku is
+old enough not to require it.)
 
 ## Vector store: Amazon S3 Vectors, not OpenSearch Serverless
 

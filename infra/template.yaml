@@ -2,8 +2,13 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   BiteCheck API - HTTP API + Lambda orchestrator + DynamoDB cache/catalog.
-  Region: ap-south-1 (Mumbai) - lower latency for the actual Indian userbase, and both
-  S3 Vectors and Claude (via Global/APAC cross-region inference) are available there.
+  Region: us-east-1. Was briefly switched to ap-south-1 (Mumbai) - both S3 Vectors and
+  Claude are documented as available there - but Bedrock model invocation (InvokeModel and
+  Converse, tested directly via CLI, for both a first-party Amazon model and Claude) fails
+  account-wide in ap-south-1 with a generic "Operation not allowed" ValidationException,
+  while the identical call succeeds in us-east-1. Not an IAM issue (explicitly allowed) or
+  an Organizations SCP (account isn't in an Org) - most likely this account's free-credit
+  program only provisions Bedrock in us-east-1. See docs/TRD.md for the full story.
   The Bedrock Knowledge Base and its S3 Vectors store are bootstrapped
   separately by scripts/bootstrap_kb.py (one-time, slow resources kept out of the stack
   we redeploy repeatedly) and their IDs are passed in here as parameters.

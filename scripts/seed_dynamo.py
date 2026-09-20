@@ -68,7 +68,7 @@ def _floats_to_decimal(value: Any) -> Any:
     return value
 
 
-def seed(products: list[dict], region: str = "ap-south-1", table_name: str = TABLE_NAME) -> int:
+def seed(products: list[dict], region: str = "us-east-1", table_name: str = TABLE_NAME) -> int:
     """Batch-write products into the catalog table. Returns count written.
 
     Only the fields the catalog schema actually uses are written (see
@@ -97,7 +97,7 @@ def seed(products: list[dict], region: str = "ap-south-1", table_name: str = TAB
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="validate only, do not write")
-    parser.add_argument("--region", default="ap-south-1")
+    parser.add_argument("--region", default="us-east-1")
     args = parser.parse_args()
 
     try:

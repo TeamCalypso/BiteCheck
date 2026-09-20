@@ -38,7 +38,7 @@ class Config:
     @classmethod
     def from_env(cls) -> "Config":
         return cls(
-            region=_env("AWS_REGION", "ap-south-1"),
+            region=_env("AWS_REGION", "us-east-1"),
             knowledge_base_id=_env("KNOWLEDGE_BASE_ID"),
             cache_table=_env("CACHE_TABLE", "bitecheck-cache"),
             catalog_table=_env("CATALOG_TABLE", "bitecheck-catalog"),
