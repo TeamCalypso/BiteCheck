@@ -26,6 +26,14 @@ os.environ.setdefault("AWS_SECURITY_TOKEN", "testing")
 os.environ.setdefault("AWS_SESSION_TOKEN", "testing")
 os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 os.environ.setdefault("AWS_REGION", "us-east-1")
+
+# Config.ai_provider defaults to "gemini" in production (see config.py - Bedrock is
+# account-blocked, docs/TRD.md has the story). Tests default to "bedrock" instead so the
+# large existing suite, which mocks bedrock.converse()/bedrock.retrieve() directly, keeps
+# testing that path without silently routing through Gemini/local retrieval instead.
+# Gemini-path tests (test_llm_facade.py, the Gemini cases in test_analyze_handler.py) set
+# AI_PROVIDER="gemini" explicitly for the duration of that one test via monkeypatch.
+os.environ.setdefault("AI_PROVIDER", "bedrock")
 os.environ.setdefault("CACHE_TABLE", "bitecheck-cache-test")
 os.environ.setdefault("CATALOG_TABLE", "bitecheck-catalog-test")
 

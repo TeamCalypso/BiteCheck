@@ -3,7 +3,8 @@
 Amazon titles and regulator circulars never use the same words. A listing says
 "Everest Super Garam Masala 100g Pouch (Pack of 2)" while a circular says
 "Everest Food Products Pvt Ltd - Garam Masala Powder". String matching fails here, so a
-cheap Bedrock model collapses both into {brand, product, category} before retrieval.
+cheap model (via clients/llm.py - Bedrock or Gemini, see that module) collapses both into
+{brand, product, category} before retrieval.
 
 The same call answers "is this even food?", which is the gate the web flow needs before
 spending money on RAG (see handlers/analyze.py: isFoodProduct=false short-circuits to
@@ -15,8 +16,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from bitecheck.clients import bedrock
-from bitecheck.config import Config
+from bitecheck.clients import llm
 
 logger = logging.getLogger(__name__)
 
@@ -101,16 +101,15 @@ def normalize(
     if bullets:
         user_text += "\nListing bullet points:\n" + "\n".join(f"- {b}" for b in bullets[:5])
 
-    config = Config.from_env()
     try:
-        result = bedrock.converse(
-            model_id=config.fast_model_id,
+        result = llm.converse(
+            kind="fast",
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": [{"text": user_text}]}],
             tool_schema=_TOOL_SCHEMA,
         )
     except Exception:
-        logger.exception("normalize() Bedrock call failed for title=%r", title)
+        logger.exception("normalize() LLM call failed for title=%r", title)
         # Fail toward attempting the analysis as food with low confidence, not toward a
         # false "not food" - retrieval will legitimately come up NO_DATA if this guess is
         # wrong, whereas a false "not food" silently tells a shopper nothing was checked.

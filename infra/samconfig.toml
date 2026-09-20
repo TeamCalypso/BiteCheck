@@ -6,20 +6,26 @@ region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-# First deploy (Sept 20) went out with these placeholders: Bedrock invocation is blocked
-# account-wide by an AWS-side "account verification" hold (see docs/TRD.md), so
-# scripts/bootstrap_kb.py cannot run yet - there is no real knowledge base to point at.
-# Everything else (Lambda, API Gateway, DynamoDB) is real and live regardless; /v1/analyze
-# will error at runtime until these are replaced with real values from
-# infra/kb-outputs.json once bootstrap_kb.py can run. Do not commit real values with
-# account-specific ARNs beyond what's already safe to share - kb-outputs.json (gitignored)
-# is the source of truth once it exists.
+# First deploy (Sept 20) went out with Bedrock placeholders: invocation is blocked
+# account-wide by an AWS-side "account verification" hold (see docs/TRD.md's "AI
+# provider" section), so scripts/bootstrap_kb.py cannot run yet - there is no real
+# knowledge base to point at. AiProvider=gemini is the active path as a result; the four
+# Bedrock parameters stay as harmless placeholders rather than being removed, so flipping
+# AiProvider back to "bedrock" later needs only real values here, not a template change.
+#
+# GeminiApiKey is deliberately NOT in this committed file (never commit a real API key -
+# CLAUDE.md rule #4). It's passed on the command line at deploy time instead, e.g.:
+#   sam deploy --parameter-overrides KnowledgeBaseId=PENDING-BEDROCK-ACCESS CorpusBucketName=PENDING-BEDROCK-ACCESS BedrockVerdictModelId=PENDING-BEDROCK-ACCESS BedrockFastModelId=PENDING-BEDROCK-ACCESS AllowedOrigin=* AiProvider=gemini "GeminiApiKey=$env:GEMINI_API_KEY" GeminiVerdictModel=gemini-2.0-flash GeminiFastModel=gemini-2.0-flash-lite
+# (reads the key from the deployer's own environment variable - never typed or committed)
 parameter_overrides = [
   "KnowledgeBaseId=PENDING-BEDROCK-ACCESS",
   "CorpusBucketName=PENDING-BEDROCK-ACCESS",
   "BedrockVerdictModelId=PENDING-BEDROCK-ACCESS",
   "BedrockFastModelId=PENDING-BEDROCK-ACCESS",
-  "AllowedOrigin=*"
+  "AllowedOrigin=*",
+  "AiProvider=gemini",
+  "GeminiVerdictModel=gemini-2.0-flash",
+  "GeminiFastModel=gemini-2.0-flash-lite"
 ]
 
 [default.build.parameters]

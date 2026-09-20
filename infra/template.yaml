@@ -30,6 +30,14 @@ Globals:
         BEDROCK_FAST_MODEL: !Ref BedrockFastModelId
         CACHE_TTL_SECONDS: "86400"
         RETRIEVAL_TOP_K: "8"
+        # AI provider pivot - see docs/TRD.md's "AI provider" section. Bedrock is blocked
+        # by an AWS-side account verification hold; Gemini is the active path today.
+        # Bedrock env vars above and its IAM policies below are left fully in place, not
+        # removed, so flipping this back to "bedrock" is a one-parameter change.
+        AI_PROVIDER: !Ref AiProvider
+        GEMINI_API_KEY: !Ref GeminiApiKey
+        GEMINI_VERDICT_MODEL: !Ref GeminiVerdictModel
+        GEMINI_FAST_MODEL: !Ref GeminiFastModel
 
 Parameters:
   KnowledgeBaseId:
@@ -50,6 +58,30 @@ Parameters:
     Description: >
       CORS origin for the HTTP API. Tighten to the Amplify URL and
       chrome-extension://<id> once both are known; keep * only for early development.
+  AiProvider:
+    Type: String
+    Default: gemini
+    AllowedValues: [bedrock, gemini]
+    Description: Which LLM provider clients/llm.py dispatches to. "gemini" while Bedrock
+      access is blocked; flip to "bedrock" the moment it clears.
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Free-tier key from https://aistudio.google.com/apikey. NoEcho keeps it
+      out of the CloudFormation console/CLI output; still visible to the Lambda's own
+      environment variables page to anyone with console access to this account, same as
+      any other Lambda env var - fine for a hackathon, would move to Secrets Manager for
+      anything longer-lived.
+  GeminiVerdictModel:
+    Type: String
+    Default: gemini-2.0-flash
+    Description: Model for the strict-schema verdict call (needs to follow instructions
+      precisely and reason over regulator prose).
+  GeminiFastModel:
+    Type: String
+    Default: gemini-2.0-flash-lite
+    Description: Cheap model for entity normalization and the food gate.
 
 Resources:
   # ---------------------------------------------------------------- HTTP API

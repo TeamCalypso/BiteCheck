@@ -156,8 +156,7 @@ def _run_pipeline(body: dict[str, Any]) -> dict[str, Any]:
     )
 
     # --- 6. retrieve --------------------------------------------------------------------
-    query = normalizer.build_retrieval_query(normalized)
-    chunks = rag.retrieve(query, category=normalized.category)
+    chunks = rag.retrieve(normalized)
 
     # --- 7. assess ------------------------------------------------------------------------
     draft = verdict.assess(normalized, chunks, nutrition=_nutrition_to_dict(nutrition_result))

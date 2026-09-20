@@ -19,8 +19,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from bitecheck.clients import bedrock
-from bitecheck.config import Config
+from bitecheck.clients import llm
 from bitecheck.core.grounding import RetrievedChunk
 from bitecheck.core.normalizer import NormalizedProduct
 
@@ -145,7 +144,6 @@ def assess(
     if not chunks:
         return {"verdict": dict(_NO_DATA_VERDICT), "findings": []}
 
-    config = Config.from_env()
     product_desc = f"Brand: {product.brand or 'unknown'}\nProduct: {product.name}\nCategory: {product.category}"
     nutrition_block = _format_nutrition_summary(nutrition) if nutrition else ""
     user_text = (
@@ -156,8 +154,8 @@ def assess(
     )
 
     try:
-        result = bedrock.converse(
-            model_id=config.verdict_model_id,
+        result = llm.converse(
+            kind="verdict",
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": [{"text": user_text}]}],
             tool_schema=_TOOL_SCHEMA,

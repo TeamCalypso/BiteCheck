@@ -34,6 +34,16 @@ class Config:
     retrieval_top_k: int
     openfoodfacts_timeout_s: float
     corpus_bucket: str
+    # Provider pivot (see docs/TRD.md's "AI provider" section): Bedrock access has been
+    # blocked account-side by an AWS "account currently being verified" hold. Rather than
+    # rip out the Bedrock code, both providers coexist behind this flag - clients/llm.py
+    # dispatches converse() to whichever is active, core/rag.py dispatches retrieve() the
+    # same way. Flip AI_PROVIDER back to "bedrock" the moment access clears; nothing else
+    # needs to change.
+    ai_provider: str  # "bedrock" | "gemini"
+    gemini_api_key: str
+    gemini_verdict_model: str
+    gemini_fast_model: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -52,6 +62,10 @@ class Config:
             retrieval_top_k=int(_env("RETRIEVAL_TOP_K", "8")),
             openfoodfacts_timeout_s=float(_env("OFF_TIMEOUT_SECONDS", "2.5")),
             corpus_bucket=_env("CORPUS_BUCKET"),
+            ai_provider=_env("AI_PROVIDER", "gemini"),
+            gemini_api_key=_env("GEMINI_API_KEY"),
+            gemini_verdict_model=_env("GEMINI_VERDICT_MODEL", "gemini-2.0-flash"),
+            gemini_fast_model=_env("GEMINI_FAST_MODEL", "gemini-2.0-flash-lite"),
         )
 
 
