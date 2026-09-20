@@ -74,23 +74,13 @@ export async function analyzeProduct(url, options = {}) {
   } catch (err) {
     clearTimeout(timer);
 
-    // Fallback: If network failed or endpoint is not yet live, provide best matching fixture
-    console.warn('[BiteCheck API] Live endpoint unreachable, activating demo fallback:', err.message);
-
-    const fallbackKey = url.toLowerCase().includes('mouse')
-      ? 'not-food'
-      : url.toLowerCase().includes('spice') || url.toLowerCase().includes('masala')
-      ? 'critical-spice'
-      : url.toLowerCase().includes('protein') || url.toLowerCase().includes('whey')
-      ? 'caution-protein'
-      : 'clear-turmeric';
-
-    const fallbackFixture = FIXTURES[fallbackKey];
-    return {
-      data: fallbackFixture,
-      source: 'fallback',
-      warning: 'Showing offline demonstration data (API offline or connecting).',
-    };
+    // Do NOT silently substitute fabricated data for a real answer here - this path runs
+    // for any real product a user pastes, and returning a confident-looking fake verdict
+    // (with a fake citation) undermines the whole "every claim is grounded" premise of the
+    // project. Let the caller (interface.js's triggerAnalysis) handle this as a real error -
+    // it already shows an honest "analysis failed, try again" state.
+    console.warn('[BiteCheck API] Live endpoint unreachable:', err.message);
+    throw new Error('Could not reach the safety database. Please try again in a moment.');
   }
 }
 
@@ -106,13 +96,11 @@ export async function fetchTrending() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
-    // Default fallback trending ticker items
-    return [
-      { asin: 'B08XYZ1234', title: 'Everest Garam Masala 100g', status: 'CRITICAL', score: 18, hitCount: 1420 },
-      { asin: 'B09ABC5678', title: 'Optimum Nutrition Gold Whey 1kg', status: 'CAUTION', score: 58, hitCount: 890 },
-      { asin: 'B07DEF9012', title: 'Organic Turmeric Root Powder 200g', status: 'CLEAR', score: 94, hitCount: 654 },
-      { asin: 'B01GHI3456', title: 'Catch Super Garam Masala', status: 'CLEAR', score: 91, hitCount: 512 },
-    ];
+    // Empty, not fabricated real-brand data with made-up scores - an empty ticker is
+    // honest; a list of specific "CRITICAL"/"CAUTION" claims about real companies
+    // (Everest, Optimum Nutrition) that were never actually checked is not.
+    console.warn('[BiteCheck API] Trending endpoint unreachable:', err.message);
+    return [];
   }
 }
 
@@ -130,13 +118,10 @@ export async function draftGrievance(requestId) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
-    // Return sample draft complaint
-    return {
-      requestId,
-      status: 'DRAFT',
-      portal: 'FoSCoS Consumer Grievance Portal (https://foscos.fssai.gov.in)',
-      subject: 'Formal Safety Complaint: Ethylene Oxide Contaminant in Spices',
-      draftText: `To The Designated Officer, Food Safety and Standards Authority of India,\n\nSubject: Formal Complaint regarding contaminated food product sold on Amazon India.\n\nProduct: Demo Masala Co. - Garam Masala Blend (ASIN: B0FIXTURE1, FSSAI Lic: 10012345678901).\n\nViolation Summary: An overseas regulatory recall (EU RASFF 2024.XXXX) identified Ethylene Oxide pesticide residue at 0.24 mg/kg exceeding the maximum residue limits. Batches affected: E24/09, E24/11.\n\nKindly initiate necessary inspection and product recall under the Food Safety and Standards Act, 2006.`,
-    };
+    // A fixed sample draft here would cite the wrong product entirely (a hardcoded
+    // ASIN/brand, not whatever the user was actually looking at) - just as misleading as
+    // the other fallbacks, and confusing on top of that. Let the caller show a real error.
+    console.warn('[BiteCheck API] Grievance endpoint unreachable:', err.message);
+    throw new Error('Could not draft the complaint right now. Please try again.');
   }
 }

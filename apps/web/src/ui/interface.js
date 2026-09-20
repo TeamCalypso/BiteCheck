@@ -140,8 +140,12 @@ export function setupUI(engine) {
       grievanceModal.classList.add('visible');
       grievanceText.value = 'Drafting formal FoSCoS grievance citing official circulars...';
 
-      const result = await draftGrievance(currentAnalysis.requestId);
-      grievanceText.value = result.draftText;
+      try {
+        const result = await draftGrievance(currentAnalysis.requestId);
+        grievanceText.value = result.draftText;
+      } catch (err) {
+        grievanceText.value = err.message || 'Could not draft the complaint right now. Please try again.';
+      }
     });
   }
 

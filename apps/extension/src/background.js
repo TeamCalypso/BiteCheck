@@ -1,7 +1,7 @@
 // BiteCheck Chrome Extension Background Service Worker (Manifest V3)
 // Performs out-of-band network calls to bypass host page Content-Security-Policy (CSP)
 
-import { DEFAULT_API_URL, DEMO_FIXTURES } from './config.js';
+import { DEFAULT_API_URL } from './config.js';
 
 /**
  * Retrieves configured backend API URL from chrome.storage
@@ -15,67 +15,13 @@ async function getApiUrl() {
   }
 }
 
-/**
- * Fallback generator for offline evaluation or demo testing when local server is inactive
- */
-function createFallbackAnalysis(asin, extracted) {
-  // 1. Direct fixture match
-  if (DEMO_FIXTURES[asin]) {
-    return { ...DEMO_FIXTURES[asin], cached: true };
-  }
-
-  // 2. Synthesize clean grounded response from extracted DOM
-  const title = extracted.title || 'Amazon Food Listing';
-  const brand = extracted.brand || 'Verified Seller';
-  const fssai = extracted.technicalDetails && (
-    extracted.technicalDetails['FSSAI License'] ||
-    extracted.technicalDetails['FSSAI Licence'] ||
-    extracted.technicalDetails['FSSAI Lic. No.']
-  );
-
-  return {
-    requestId: 'demo-' + Math.random().toString(36).substring(2, 11),
-    asin: asin || 'B0UNKNOWN1',
-    cached: true,
-    generatedAt: new Date().toISOString(),
-    product: {
-      brand: brand,
-      name: title,
-      category: 'other_food',
-      netQuantity: extracted.technicalDetails?.['Net Quantity'] || 'Standard Pack',
-      fssaiLicense: fssai || '10012345678901',
-      isFoodProduct: true,
-      imageUrl: extracted.imageUrl || null,
-    },
-    verdict: {
-      status: 'CLEAR',
-      score: 92,
-      headline: 'No adverse recall circulars or contamination records found',
-      summary: `Cross-referenced FSSAI, EU RASFF, US FDA, and CFS recall circulars for ${brand}. No contamination, pesticide violations, or misbranding orders reported for this product.`,
-    },
-    findings: [],
-    nutrition: {
-      basis: 'per_100g',
-      confidence: 'MEDIUM',
-      source: 'amazon_label',
-      novaGroup: 1,
-      additives: [],
-      macros: [
-        { key: 'carbohydrate', label: 'Carbs', grams: 50.0, pct: 50.0, class: 'NEUTRAL' },
-        { key: 'protein', label: 'Protein', grams: 18.0, pct: 18.0, class: 'GOOD' },
-        { key: 'fat', label: 'Fat', grams: 12.0, pct: 12.0, class: 'NEUTRAL' },
-        { key: 'fiber', label: 'Fiber', grams: 10.0, pct: 10.0, class: 'GOOD' },
-        { key: 'other', label: 'Other', grams: 10.0, pct: 10.0, class: 'UNKNOWN' },
-      ],
-    },
-    alternatives: [],
-    grievance: {
-      eligible: false,
-      reason: 'No regulatory violations detected.',
-    },
-    disclaimer: 'Informational only, compiled from public regulator records. Not a laboratory result for the specific pack you are viewing. Always check the batch code printed on your package.',
-  };
-}
+// NOTE: there used to be a createFallbackAnalysis() here that silently substituted
+// fabricated data (a hardcoded "CLEAR" verdict claiming FSSAI/RASFF/FDA/CFS circulars had
+// been cross-referenced, when they never were) whenever the real API failed. Removed - see
+// handleAnalyzeProduct() below. Every claim BiteCheck shows must trace to something we
+// actually checked; a confident-looking fake result is worse than an honest "couldn't
+// reach the server, try again" error, especially for a real product a real user is
+// looking at.
 
 // Listen for messages from content script or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -138,12 +84,15 @@ async function handleAnalyzeProduct({ url, asin, extracted, forceRefresh }) {
       return json;
     } else {
       const errText = await res.text();
-      console.warn(`[BiteCheck] API returned ${res.status}: ${errText}. Using offline fallback.`);
-      return createFallbackAnalysis(asin, extracted);
+      console.warn(`[BiteCheck] API returned ${res.status}: ${errText}`);
+      throw new Error('Could not reach the safety database. Please try again.');
     }
   } catch (networkErr) {
-    console.warn(`[BiteCheck] Could not connect to API at ${endpoint} (${networkErr.message}). Using offline fallback.`);
-    return createFallbackAnalysis(asin, extracted);
+    console.warn(`[BiteCheck] Could not connect to API at ${endpoint} (${networkErr.message})`);
+    // Let this propagate - the onMessage listener's .catch() turns it into
+    // { success: false, error }, which content.js shows as an honest "couldn't check this
+    // right now" state rather than a fabricated verdict about a real product.
+    throw networkErr;
   }
 }
 
@@ -154,37 +103,20 @@ async function handleDraftGrievance({ requestId, product, findings }) {
   const apiUrl = await getApiUrl();
   const endpoint = `${apiUrl.replace(/\/$/, '')}/v1/grievance`;
 
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId }),
-    });
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requestId }),
+  });
 
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    // Generate standard FoSCoS template fallback
+  if (!res.ok) {
+    // No template fallback here on purpose: a hardcoded "Finding: Regulatory
+    // non-compliance" letter, generated when we never actually confirmed a violation,
+    // is a real, formal-looking accusation a user could copy straight into FoSCoS against
+    // a real company. That's worse than the analyze-path fallback, not just equivalent to
+    // it - let this fail honestly and ask the user to retry.
+    throw new Error('Could not draft the complaint right now. Please try again.');
   }
 
-  const brand = product?.brand || 'The Brand';
-  const name = product?.name || 'Food Product';
-  const fssai = product?.fssaiLicense || '[Licence Not Declared]';
-  const primaryFinding = findings && findings[0] ? findings[0].title : 'Regulatory non-compliance';
-  const batches = findings && findings[0] && findings[0].batches ? findings[0].batches.join(', ') : 'N/A';
-
-  return {
-    grievanceText:
-      `To: The Central Licensing Authority / Designated Officer, FSSAI\n` +
-      `Subject: Formal Consumer Grievance Regarding Contamination / Non-Compliance in ${name}\n\n` +
-      `Respected Authority,\n\n` +
-      `I am lodging a formal consumer grievance regarding the product "${name}" manufactured/marketed by "${brand}" (FSSAI Lic. No: ${fssai}).\n\n` +
-      `Particulars of Non-Compliance:\n` +
-      `- Finding: ${primaryFinding}\n` +
-      `- Reported Affected Batches: ${batches}\n` +
-      `- Product Listing Reference: ASIN ${product?.asin || ''}\n\n` +
-      `I request the Authority to initiate sampling, verify compliance under the Food Safety and Standards Act, 2006, and issue necessary consumer safety directives.\n\n` +
-      `Yours sincerely,\nA Concerned Consumer`,
-  };
+  return await res.json();
 }

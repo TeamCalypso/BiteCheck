@@ -285,6 +285,29 @@
     mountHostElement();
   }
 
+  function renderError(message) {
+    const root = getOrCreateShadowRoot();
+
+    let container = root.getElementById('bc-inline-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'bc-inline-container';
+      root.appendChild(container);
+    }
+
+    container.innerHTML = `
+      <div class="bc-pill" style="background:#64748B;">
+        <div class="bc-pill-left">
+          <span>ℹ</span>
+          <span class="bc-brand-title">BiteCheck</span>
+          <span class="bc-loading-text">${message || 'Could not check this product right now. Please try again.'}</span>
+        </div>
+      </div>
+    `;
+
+    mountHostElement();
+  }
+
   function mountHostElement() {
     const anchor = findAnchorElement();
     if (!anchor) return;
@@ -610,6 +633,8 @@
             if (res && res.success && res.data) {
               textarea.value = res.data.grievanceText || '';
               modal.style.display = 'flex';
+            } else {
+              alert((res && res.error) || 'Could not draft the complaint right now. Please try again.');
             }
           }
         );
@@ -1364,61 +1389,11 @@
     shadow.appendChild(style);
   }
 
-  /**
-   * Generates instant realistic analysis for any product
-   */
-  function synthesizeLocalAnalysis(asin, extracted) {
-    const title = extracted.title || 'Amazon Food Listing';
-    const brand = extracted.brand || 'Verified Seller';
-    const fssai =
-      extracted.technicalDetails?.['FSSAI License'] ||
-      extracted.technicalDetails?.['FSSAI Licence'] ||
-      extracted.technicalDetails?.['FSSAI Lic. No.'] ||
-      '10014011001890';
-
-    return {
-      requestId: 'ext-' + Math.random().toString(36).substring(2, 11),
-      asin: asin,
-      cached: true,
-      generatedAt: new Date().toISOString(),
-      product: {
-        brand: brand,
-        name: title,
-        category: 'packaged_snacks',
-        netQuantity: extracted.technicalDetails?.['Net Quantity'] || '500 g',
-        fssaiLicense: fssai,
-        isFoodProduct: true,
-        imageUrl: extracted.imageUrl || null,
-      },
-      verdict: {
-        status: 'CLEAR',
-        score: 92,
-        headline: 'No adverse recall circulars or contamination records found',
-        summary: `Cross-referenced FSSAI, EU RASFF, US FDA, and CFS recall circulars for ${brand}. No contamination, pesticide violations, or misbranding orders reported for this product.`,
-      },
-      findings: [],
-      nutrition: {
-        basis: 'per_100g',
-        confidence: 'MEDIUM',
-        source: 'amazon_label',
-        novaGroup: 3,
-        additives: [],
-        macros: [
-          { key: 'carbohydrate', label: 'Carbs', grams: 54.0, pct: 54.0, class: 'NEUTRAL' },
-          { key: 'protein', label: 'Protein', grams: 20.0, pct: 20.0, class: 'GOOD' },
-          { key: 'fiber', label: 'Fiber', grams: 12.0, pct: 12.0, class: 'GOOD' },
-          { key: 'fat', label: 'Fat', grams: 8.0, pct: 8.0, class: 'NEUTRAL' },
-          { key: 'other', label: 'Unspecified', grams: 6.0, pct: 6.0, class: 'UNKNOWN' },
-        ],
-      },
-      alternatives: [],
-      grievance: {
-        eligible: false,
-        reason: 'Clean regulatory record. No violation found.',
-      },
-      disclaimer: 'Informational only, compiled from public regulator records. Not a laboratory result for the specific pack you are viewing. Always check the batch code printed on your package.',
-    };
-  }
+  // NOTE: there used to be a synthesizeLocalAnalysis() here that fabricated a "CLEAR,
+  // cross-referenced FSSAI/RASFF/FDA/CFS" verdict for whatever real product/brand was on
+  // screen, fired by a 1.5s timeout race against the real backend call. Removed along with
+  // that timeout (see inspectCurrentPage below) - see the same note in background.js for
+  // why a confident-looking fake result is worse than an honest failure state.
 
   /**
    * Main inspection flow for the active Amazon product
@@ -1474,8 +1449,12 @@
               console.log('[BiteCheck] Received analysis from background:', res.data);
               renderAnalysis(res.data);
             } else {
-              console.log('[BiteCheck] Using local synthesis fallback');
-              renderAnalysis(synthesizeLocalAnalysis(asin, extracted));
+              // No fabricated "CLEAR, cross-referenced FSSAI/RASFF/FDA/CFS" verdict here -
+              // that used to fire on almost every real page load (see the removed 1.5s
+              // timeout below) and told users a real product had "no adverse records"
+              // when nothing was actually checked. An honest failure state instead.
+              console.warn('[BiteCheck] Analysis failed:', res && res.error);
+              renderError(res && res.error);
             }
           }
         );
@@ -1483,14 +1462,19 @@
         console.warn('[BiteCheck] Runtime error:', err);
       }
 
-      // Safety timeout: If background worker takes too long or fails to respond, render local analysis immediately
+      // Safety timeout: only for a genuinely hung/crashed service worker (extension
+      // context invalidated, etc) - NOT a substitute for waiting on a real answer. The
+      // backend does real AI work and documents a 3-5s typical cold path
+      // (docs/TRD.md's latency budget), so this used to fire on almost every real
+      // request at 1.5s and silently show a fabricated "verified clean" result instead.
+      // 20s gives the real analysis a real chance to complete first.
       setTimeout(() => {
         if (!handled) {
           handled = true;
-          console.log('[BiteCheck] Fallback triggered after timeout');
-          renderAnalysis(synthesizeLocalAnalysis(asin, extracted));
+          console.warn('[BiteCheck] No response from background worker after 20s');
+          renderError('This is taking longer than expected. Please try again.');
         }
-      }, 1500);
+      }, 20000);
     }, 300);
   }
 
