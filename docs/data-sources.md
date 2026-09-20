@@ -55,3 +55,4 @@ artifact:
 | Document | Issuer | Date | Source URL | Added by |
 |---|---|---|---|---|
 | Food Safety and Standards (Labelling and Display) Regulations, 2020 - Version VII | FSSAI | 2025-04-03 | https://fssai.gov.in/upload/uploadfiles/files/Comp_Labelling%20Display_Version%20VII_03042025.pdf | Mahek |
+| FoSCoS Food Recall export (205 recall records, snapshot 2026-09-20) | FSSAI / FoSCoS | 2026-09-20 | https://foscos.fssai.gov.in/food-recall | Mahek |
