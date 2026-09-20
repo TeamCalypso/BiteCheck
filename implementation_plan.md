@@ -75,7 +75,7 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
       and unit-tested against a moto-simulated DynamoDB, no AWS account needed
 - [x] `scripts/seed_dynamo.py::seed()` implemented and smoke-tested (moto) — including a
       float→Decimal fix that would otherwise have crashed on first real run.
-      `data/seed/products.json` still needs the ~30 real ASINs filled in (Saket + Mahek)
+      `data/seed/products.json` still needs the ~30 real ASINs filled in — **Mahek's task**
 - [x] `core/normalizer.py` (entity extraction + food gate, via `clients/llm.py`'s
       provider dispatch) — unit-tested with mocks, **and verified live against real
       Gemini**: correctly extracted brand/category/confidence from a real product title
@@ -127,16 +127,17 @@ Owners: **Saket** (backend/infra/deploy), **Mahek** (knowledge base/AI),
       (still first on the cut list if time is short — see below)
 - [ ] `alternatives[]` populated from the catalog
 - [ ] Error/empty/not-food states verified on both surfaces
-- [ ] Tighten `infra/template.yaml`'s `AllowedOrigin` from `*` to the real origins, **once
-      Ritvik's extension has a real ID** (it's `chrome-extension://<id>`, only assigned
-      once loaded in Chrome — narrowing CORS before we know it would risk breaking the
-      extension's API calls with no way to test it ourselves). Needs both the Amplify
-      origin and the extension ID added, then a redeploy. Do this last, deliberately,
-      not as an afterthought right before the demo.
+- [x] ~~Tighten `infra/template.yaml`'s `AllowedOrigin`~~ — **decided not needed.** The
+      extension is only being loaded unpacked for the demo, never published, so
+      `chrome-extension://jhncindnmmcjbbejjjgghgkljmbibakk` already works fine against the
+      current `AllowedOrigin: *` with zero changes. Narrowing CORS now would only be
+      security hardening, not something the demo needs, and isn't worth a redeploy risk
+      this close to the deadline. Left as a possible post-hackathon cleanup.
 
 ## Phase 6 — Submission
 
-- [ ] `README.md` finished with real URLs filled in
+- [x] `README.md` finished with real URLs filled in, plus the "Why Gemini, not Bedrock, is
+      live" section explaining the account-verification hold and the provider pivot
 - [ ] Demo video recorded per `docs/demo-script.md`, uploaded to YouTube
       public/unlisted, **verified to open in a signed-out browser**
 - [ ] Written explanation submitted (problem, build, AWS integration)
