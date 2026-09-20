@@ -75,12 +75,12 @@ Parameters:
       anything longer-lived.
   GeminiVerdictModel:
     Type: String
-    Default: gemini-2.0-flash
+    Default: gemini-3.5-flash
     Description: Model for the strict-schema verdict call (needs to follow instructions
       precisely and reason over regulator prose).
   GeminiFastModel:
     Type: String
-    Default: gemini-2.0-flash-lite
+    Default: gemini-3.5-flash-lite
     Description: Cheap model for entity normalization and the food gate.
 
 Resources:

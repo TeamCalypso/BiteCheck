@@ -214,7 +214,9 @@ def _run_pipeline(body: dict[str, Any]) -> dict[str, Any]:
             "latencyMs": int((time.monotonic() - start) * 1000),
             "chunksRetrieved": len(chunks),
             "findingsDropped": grounded.dropped,
-            "modelId": config.verdict_model_id or None,
+            "modelId": (
+                config.gemini_verdict_model if config.ai_provider == "gemini" else config.verdict_model_id
+            ) or None,
             "nutritionSource": nutrition_result.source if nutrition_result else None,
         },
         "disclaimer": DISCLAIMER,

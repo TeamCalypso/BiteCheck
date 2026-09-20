@@ -15,7 +15,7 @@ resolve_s3 = true
 #
 # GeminiApiKey is deliberately NOT in this committed file (never commit a real API key -
 # CLAUDE.md rule #4). It's passed on the command line at deploy time instead, e.g.:
-#   sam deploy --parameter-overrides KnowledgeBaseId=PENDING-BEDROCK-ACCESS CorpusBucketName=PENDING-BEDROCK-ACCESS BedrockVerdictModelId=PENDING-BEDROCK-ACCESS BedrockFastModelId=PENDING-BEDROCK-ACCESS AllowedOrigin=* AiProvider=gemini "GeminiApiKey=$env:GEMINI_API_KEY" GeminiVerdictModel=gemini-2.0-flash GeminiFastModel=gemini-2.0-flash-lite
+#   sam deploy --parameter-overrides KnowledgeBaseId=PENDING-BEDROCK-ACCESS CorpusBucketName=PENDING-BEDROCK-ACCESS BedrockVerdictModelId=PENDING-BEDROCK-ACCESS BedrockFastModelId=PENDING-BEDROCK-ACCESS AllowedOrigin=* AiProvider=gemini "GeminiApiKey=$env:GEMINI_API_KEY" GeminiVerdictModel=gemini-3.5-flash GeminiFastModel=gemini-3.5-flash-lite
 # (reads the key from the deployer's own environment variable - never typed or committed)
 parameter_overrides = [
   "KnowledgeBaseId=PENDING-BEDROCK-ACCESS",
@@ -24,8 +24,8 @@ parameter_overrides = [
   "BedrockFastModelId=PENDING-BEDROCK-ACCESS",
   "AllowedOrigin=*",
   "AiProvider=gemini",
-  "GeminiVerdictModel=gemini-2.0-flash",
-  "GeminiFastModel=gemini-2.0-flash-lite"
+  "GeminiVerdictModel=gemini-3.5-flash",
+  "GeminiFastModel=gemini-3.5-flash-lite"
 ]
 
 [default.build.parameters]

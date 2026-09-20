@@ -64,8 +64,8 @@ class Config:
             corpus_bucket=_env("CORPUS_BUCKET"),
             ai_provider=_env("AI_PROVIDER", "gemini"),
             gemini_api_key=_env("GEMINI_API_KEY"),
-            gemini_verdict_model=_env("GEMINI_VERDICT_MODEL", "gemini-2.0-flash"),
-            gemini_fast_model=_env("GEMINI_FAST_MODEL", "gemini-2.0-flash-lite"),
+            gemini_verdict_model=_env("GEMINI_VERDICT_MODEL", "gemini-3.5-flash"),
+            gemini_fast_model=_env("GEMINI_FAST_MODEL", "gemini-3.5-flash-lite"),
         )
 
 

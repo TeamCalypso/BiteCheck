@@ -13,8 +13,7 @@ import json
 import logging
 from typing import Any
 
-from bitecheck.clients import bedrock
-from bitecheck.config import Config
+from bitecheck.clients import llm
 from bitecheck.core import cache
 from bitecheck.responses import error_response, json_response
 
@@ -54,9 +53,8 @@ def _draft(cached: dict[str, Any]) -> str:
         f"Amazon ASIN: {cached.get('asin')}\n\n"
         f"Confirmed findings on file:\n{_format_findings(findings)}"
     )
-    config = Config.from_env()
-    result = bedrock.converse(
-        model_id=config.verdict_model_id,
+    result = llm.converse(
+        kind="verdict",
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": [{"text": user_text}]}],
     )
