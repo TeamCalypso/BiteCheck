@@ -189,6 +189,30 @@ live on Amplify Hosting, all four API routes working with real Gemini calls and 
 grounded FSSAI/FoSCoS citations, 160 backend tests passing. See `implementation_plan.md`
 for the full step tracker and what's left before submission.
 
+## Frontend & 3D Particle Visualization Engine
+The BiteCheck web client (`apps/web/`) is built with **Vite**, **Vanilla JS/CSS**, and a custom **Three.js WebGL Particle Engine** that turns dry nutritional and regulatory data into an interactive, physics-driven molecular simulation.
+### <img width="1000" height="563" alt="Frontend initial (1)" src="https://github.com/user-attachments/assets/87edc4a1-ad32-4720-9167-8dc7bf6b7f8d" />
+
+### 3D Particle Engine Highlights
+* **36,000 GPU-Accelerated Particles:** High-performance particle simulation running at 60 FPS via custom GLSL vertex and fragment shaders with real-time sphere normal mapping, diffuse directional lighting, and rim-light Fresnel shading.
+* **GPU Fluid Turbulence:** Custom vertex-shader procedural noise creates fluid, organic wave turbulence and breathing motion across all particle states.
+* **Proportional Macronutrient Partitioning:** When an Amazon product is analyzed, particles dynamically subdivide into up to 8 isolated molecular clusters whose volumes directly match the product's actual macronutrient breakdown (Proteins, Carbs, Fats, Fiber, Sugars, Sodium, etc.).
+* **Semantic Colorization & Shading:** Smooth shader interpolation transitions particles from ambient pearl-slate to distinct semantic nutritional color palettes (e.g., emerald for protein, amber for carbs, crimson for fats).
+* **State-Driven Particle Lifecycle:**
+  * `INTRO_SWIRL` → `INTRO_LOGO` (assembles BiteCheck 3D brandmark & typography) → `INTRO_DISPERSE` (dissolves into ambient space).
+  * `AMBIENT`: Physics-based cursor interaction with real-time mouse repulsion and 3D camera parallax.
+  * `SCANNING`: Concentric orbital compression and high-energy particle beams while the backend Bedrock pipeline executes.
+  * `MOLECULES`: Autonomous orbital rotation of macro clusters with interactive focus and inspection.
+  * `NOT_FOOD`: Rejection scatter dynamics when non-food items or unparseable URLs are detected.
+### <img width="1000" height="563" alt="Frontend second (1)" src="https://github.com/user-attachments/assets/60ae7873-90c8-4ef2-adce-4d36c09ce5c5" />
+### Frontend UI & HUD Architecture
+* **Cinematic Camera Framing:** Dynamic lerped camera transitions that seamlessly pan, zoom, and frame the 3D particle bay as the inspection drawer opens and closes.
+* **Clinical Glassmorphic HUD:** Dark-mode interface designed with deep obsidian tones, neon telemetry accents, and crisp typography (Inter + JetBrains Mono).
+* **Instant URL & ASIN Resolver:** One-click sample product pills and live Amazon.in URL parser triggering instantaneous query normalization.
+* **Inspection Bay & Safety Drawer:** Displays grounded FSSAI recall notices, violation severity pills, allergen warnings, full macro/micro breakdown, and a one-click FoSCoS grievance draft.
+* **Zero Bloat, Maximum Speed:** Pure Vanilla CSS and ES modules bundled with Vite for ultra-low latency and instant cold loads on AWS Amplify.
+
+
 ## License
 
 See `LICENSE`.
