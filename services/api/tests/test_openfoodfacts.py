@@ -32,7 +32,10 @@ class TestSearch:
         assert openfoodfacts.search("Everest", "Garam Masala") is None
 
     def test_returns_first_result_when_no_brand_given(self, monkeypatch):
-        products = [{"code": "1", "product_name": "A"}, {"code": "2", "product_name": "B"}]
+        products = [
+            {"code": "1", "product_name": "Garam Masala Blend"},
+            {"code": "2", "product_name": "Unrelated Snack"},
+        ]
         fake_pool(monkeypatch, body={"products": products})
         result = openfoodfacts.search(None, "Garam Masala")
         assert result["code"] == "1"
@@ -47,9 +50,28 @@ class TestSearch:
         assert result["code"] == "2"
 
     def test_falls_back_to_first_result_if_brand_not_found_in_any(self, monkeypatch):
-        products = [{"code": "1", "brands": "Unrelated Brand"}]
+        """Brand string doesn't match any product's `brands` field (e.g. "Everest" vs the
+        page's fuller "Everest Food Products Pvt Ltd"), but the product name itself still
+        plausibly relates to the query - still a reasonable match."""
+        products = [{"code": "1", "brands": "Unrelated Brand", "product_name": "Garam Masala Powder"}]
         fake_pool(monkeypatch, body={"products": products})
         result = openfoodfacts.search("Everest", "Garam Masala")
+        assert result["code"] == "1"
+
+    def test_rejects_top_result_with_no_relevance_to_the_query(self, monkeypatch):
+        """Reproduces a live anomaly (2026-09-20): Open Food Facts returned the same
+        unrelated European cheese product for every query during what looked like an
+        origin hiccup, instead of an empty result. A completely irrelevant top hit must be
+        treated as no match, not confidently reported as a real nutrition source."""
+        products = [{"code": "1", "brands": "Milky Food Professional", "product_name": "Fromage Blanc Nature"}]
+        fake_pool(monkeypatch, body={"products": products})
+        assert openfoodfacts.search("Vexonyx", "Sprindle Herbal Ash Tonic") is None
+
+    def test_no_brand_or_product_given_still_trusts_the_top_result(self, monkeypatch):
+        """Nothing meaningful to check relevance against - don't block on this case."""
+        products = [{"code": "1", "product_name": "Something"}]
+        fake_pool(monkeypatch, body={"products": products})
+        result = openfoodfacts.search(None, "x")
         assert result["code"] == "1"
 
     def test_non_200_status_returns_none(self, monkeypatch):

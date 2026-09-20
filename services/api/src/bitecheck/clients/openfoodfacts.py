@@ -28,9 +28,29 @@ def _pool() -> urllib3.PoolManager:
     return urllib3.PoolManager()
 
 
-def _best_match(products: list[dict[str, Any]], brand: str | None) -> dict[str, Any] | None:
+def _plausible_match(product: dict[str, Any], brand: str | None, query_product: str | None) -> bool:
+    """True if the result shares at least one real word with what we searched for.
+
+    Guards against Open Food Facts silently degrading to an arbitrary result instead of a
+    real "no match" - observed live (2026-09-20): the search endpoint returned the exact
+    same unrelated European cheese product for every query, including well-known real
+    products, apparently during an origin hiccup. Without this check that gets reported as
+    a confident "openfoodfacts, MEDIUM confidence" nutrition match for a completely
+    different product - worse than having no match at all.
+    """
+    needles = [w for w in f"{brand or ''} {query_product or ''}".lower().split() if len(w) > 3]
+    if not needles:
+        return True  # nothing meaningful to check the result against - don't block on this
+    haystack = f"{product.get('brands') or ''} {product.get('product_name') or ''}".lower()
+    return any(word in haystack for word in needles)
+
+
+def _best_match(
+    products: list[dict[str, Any]], brand: str | None, query_product: str | None
+) -> dict[str, Any] | None:
     """Open Food Facts' own relevance ranking is decent but brand-blind. If we have a
-    brand hint, prefer the first result whose `brands` field actually contains it."""
+    brand hint, prefer the first result whose `brands` field actually contains it.
+    Otherwise fall back to the top result, but only if it plausibly relates to the query."""
     if not products:
         return None
     if brand:
@@ -38,7 +58,9 @@ def _best_match(products: list[dict[str, Any]], brand: str | None) -> dict[str, 
         for product in products:
             if brand_lower in (product.get("brands") or "").lower():
                 return product
-    return products[0]
+
+    top = products[0]
+    return top if _plausible_match(top, brand, query_product) else None
 
 
 def search(brand: str | None, product: str, timeout_s: float = 2.5) -> dict[str, Any] | None:
@@ -76,4 +98,4 @@ def search(brand: str | None, product: str, timeout_s: float = 2.5) -> dict[str,
         logger.warning("Open Food Facts returned unparseable JSON for query=%r", query)
         return None
 
-    return _best_match(payload.get("products") or [], brand)
+    return _best_match(payload.get("products") or [], brand, product)
