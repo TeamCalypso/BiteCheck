@@ -1,4 +1,6 @@
-# BiteCheck
+# BiteCheck 
+<img width="235" height="160.3" alt="image" src="https://github.com/user-attachments/assets/f5d0d3a1-f283-43ca-b58f-dc39354bf23a" />
+
 
 A food-safety layer over Indian e-commerce. FSSAI bans, lab-test failures, and recall
 notices for adulterated spices, unapproved protein powders, and mislabeled products exist
