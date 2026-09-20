@@ -6,14 +6,19 @@ region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-# Fill these in after scripts/bootstrap_kb.py runs and after Bedrock model access is
-# granted. Do not commit real values with account-specific ARNs beyond what's already
-# safe to share; kb-outputs.json (gitignored) is the source of truth.
+# First deploy (Sept 20) went out with these placeholders: Bedrock invocation is blocked
+# account-wide by an AWS-side "account verification" hold (see docs/TRD.md), so
+# scripts/bootstrap_kb.py cannot run yet - there is no real knowledge base to point at.
+# Everything else (Lambda, API Gateway, DynamoDB) is real and live regardless; /v1/analyze
+# will error at runtime until these are replaced with real values from
+# infra/kb-outputs.json once bootstrap_kb.py can run. Do not commit real values with
+# account-specific ARNs beyond what's already safe to share - kb-outputs.json (gitignored)
+# is the source of truth once it exists.
 parameter_overrides = [
-  "KnowledgeBaseId=REPLACE_ME",
-  "CorpusBucketName=REPLACE_ME",
-  "BedrockVerdictModelId=REPLACE_ME",
-  "BedrockFastModelId=REPLACE_ME",
+  "KnowledgeBaseId=PENDING-BEDROCK-ACCESS",
+  "CorpusBucketName=PENDING-BEDROCK-ACCESS",
+  "BedrockVerdictModelId=PENDING-BEDROCK-ACCESS",
+  "BedrockFastModelId=PENDING-BEDROCK-ACCESS",
   "AllowedOrigin=*"
 ]
 
