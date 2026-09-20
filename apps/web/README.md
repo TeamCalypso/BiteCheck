@@ -2,8 +2,9 @@
 
 Owner: **Ritvik**.
 
-Stack: Vite + React + TypeScript + `@react-three/fiber` / `@react-three/drei` (three.js
-particle swarm), per the approved plan.
+Stack: Vite + vanilla JS + `three` (particle swarm) — as actually built. The original plan
+called for React + TypeScript + `@react-three/fiber`; Ritvik built it directly on top of
+`three` instead, which works fine and is a reasonable simplification.
 
 ## Contract
 

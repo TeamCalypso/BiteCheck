@@ -81,7 +81,7 @@ serverless, zero idle compute cost when nobody is browsing.
 ## Repository layout
 
 ```
-apps/web/            Web app (Vite + React + TS + three.js swarm) — owner: Ritvik
+apps/web/            Web app (Vite + three.js particle swarm) — owner: Ritvik
 apps/extension/       Chrome MV3 extension — owner: Ritvik
 services/api/          Lambda backend (Python 3.12) — owner: Saket
 contract/               Frozen API schema + fixtures — the boundary between all three lanes
