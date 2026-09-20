@@ -124,6 +124,7 @@ class TestConverse:
 
     def test_non_200_raises(self, monkeypatch):
         with_api_key(monkeypatch)
+        monkeypatch.setattr(gemini.time, "sleep", lambda *_: None)
         fake_pool(monkeypatch, status=429, body={"error": "rate limited"})
         with pytest.raises(RuntimeError, match="429"):
             gemini.converse("gemini-2.0-flash", "sys", [{"role": "user", "content": [{"text": "hi"}]}])
@@ -136,19 +137,85 @@ class TestConverse:
 
     def test_network_exception_raises_runtime_error(self, monkeypatch):
         with_api_key(monkeypatch)
+        monkeypatch.setattr(gemini.time, "sleep", lambda *_: (_ for _ in ()).throw(AssertionError("should not sleep/retry on a raw exception")))
         pool = gemini._pool()
+        calls = []
 
         def boom(method, url, **kw):
+            calls.append(1)
             raise TimeoutError("connection timed out")
 
         monkeypatch.setattr(pool, "request", boom)
         with pytest.raises(RuntimeError, match="Gemini request failed"):
             gemini.converse("gemini-2.0-flash", "sys", [{"role": "user", "content": [{"text": "hi"}]}])
+        # A raw exception (connection error, read timeout) is NOT retried - see _post()'s
+        # docstring: unlike a fast-failing HTTP status, a timeout already spent the full
+        # read-timeout budget once, and retrying risks blowing the Lambda's 25s limit
+        # outright (this is exactly what happened live before this was scoped down).
+        assert len(calls) == 1
 
     def test_api_key_never_appears_in_a_raised_error(self, monkeypatch):
         """A real key must never leak into logs/exceptions if a call fails."""
         monkeypatch.setenv("GEMINI_API_KEY", "SUPER-SECRET-KEY-VALUE")
+        monkeypatch.setattr(gemini.time, "sleep", lambda *_: None)
         fake_pool(monkeypatch, status=500, body={"error": "server error"})
         with pytest.raises(RuntimeError) as exc_info:
             gemini.converse("gemini-2.0-flash", "sys", [{"role": "user", "content": [{"text": "hi"}]}])
         assert "SUPER-SECRET-KEY-VALUE" not in str(exc_info.value)
+
+
+class TestRetry:
+    """A single fast retry on a transient status - added 2026-09-20 after gemini-3.5-flash
+    started returning 503 'high demand' errors live, which verdict.assess() would silently
+    turn into a false NO_DATA (see its docstring: it deliberately never guesses a verdict on
+    an LLM failure, so an unretried transient error looked identical to a genuinely clean
+    product). See clients/gemini.py's module-level comment for the full reasoning."""
+
+    def test_retries_once_on_503_then_succeeds(self, monkeypatch):
+        with_api_key(monkeypatch)
+        monkeypatch.setattr(gemini.time, "sleep", lambda *_: None)
+        pool = gemini._pool()
+        calls = []
+
+        def flaky(method, url, **kw):
+            calls.append(1)
+            if len(calls) == 1:
+                return FakeResponse(503, {"error": {"message": "high demand"}})
+            return FakeResponse(200, candidate_response("Hello there"))
+
+        monkeypatch.setattr(pool, "request", flaky)
+        result = gemini.converse("gemini-3.5-flash", "sys", [{"role": "user", "content": [{"text": "hi"}]}])
+        assert result == {"text": "Hello there"}
+        assert len(calls) == 2
+
+    def test_gives_up_after_two_failures(self, monkeypatch):
+        with_api_key(monkeypatch)
+        monkeypatch.setattr(gemini.time, "sleep", lambda *_: None)
+        pool = gemini._pool()
+        calls = []
+
+        def always_503(method, url, **kw):
+            calls.append(1)
+            return FakeResponse(503, {"error": {"message": "high demand"}})
+
+        monkeypatch.setattr(pool, "request", always_503)
+        with pytest.raises(RuntimeError, match="503"):
+            gemini.converse("gemini-3.5-flash", "sys", [{"role": "user", "content": [{"text": "hi"}]}])
+        assert len(calls) == 2
+
+    def test_non_retryable_status_does_not_retry(self, monkeypatch):
+        """A 400 Bad Request (e.g. a malformed schema) is our own bug, not a transient
+        provider hiccup - retrying it wastes the request budget for nothing."""
+        with_api_key(monkeypatch)
+        monkeypatch.setattr(gemini.time, "sleep", lambda *_: (_ for _ in ()).throw(AssertionError("should not sleep/retry on a 400")))
+        pool = gemini._pool()
+        calls = []
+
+        def bad_request(method, url, **kw):
+            calls.append(1)
+            return FakeResponse(400, {"error": {"message": "bad request"}})
+
+        monkeypatch.setattr(pool, "request", bad_request)
+        with pytest.raises(RuntimeError, match="400"):
+            gemini.converse("gemini-3.5-flash", "sys", [{"role": "user", "content": [{"text": "hi"}]}])
+        assert len(calls) == 1

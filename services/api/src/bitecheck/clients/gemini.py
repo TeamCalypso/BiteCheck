@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from functools import lru_cache
 from typing import Any
 
@@ -25,6 +26,17 @@ logger = logging.getLogger(__name__)
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 _READ_TIMEOUT_S = 20
 _CONNECT_TIMEOUT_S = 5
+
+# Google's free-tier models return these when overloaded (observed live, 2026-09-20:
+# gemini-3.5-flash returning 503 "currently experiencing high demand"). They fail fast,
+# not by exhausting the read timeout, so one quick retry is cheap - and worth having,
+# because verdict.py deliberately degrades to NO_DATA on any LLM failure rather than
+# guessing (see its docstring), so an unretried transient error looks identical to a
+# genuinely clean product instead of surfacing as an error. Kept to a single retry with a
+# short fixed delay: the whole analyze pipeline has a 25s Lambda budget shared across two
+# sequential Gemini calls (normalize + assess), so this must stay cheap in the common case.
+_RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
+_RETRY_DELAY_S = 0.5
 
 
 @lru_cache(maxsize=1)
@@ -85,15 +97,71 @@ def _messages_to_contents(messages: list[dict[str, Any]]) -> list[dict[str, Any]
     return contents
 
 
+def _post(url: str, body: dict[str, Any], model_id: str) -> Any:
+    """One HTTP attempt, with a single fast retry on a transient status - see the module
+    constants above for why. Raises RuntimeError on any non-retryable or exhausted failure.
+
+    Deliberately does NOT retry a raw request exception (connection error, read timeout,
+    etc.) - only a retryable HTTP status. A status-code failure means the server already
+    responded quickly, so a retry is cheap; a connection/read timeout means we already spent
+    up to _READ_TIMEOUT_S finding that out, and retrying could spend it again, risking the
+    Lambda's 25s budget outright (observed live, 2026-09-20: an earlier version that also
+    retried on exceptions hit exactly this and timed out the whole request).
+    """
+    try:
+        response = _pool().request(
+            "POST",
+            url,
+            body=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            timeout=urllib3.Timeout(connect=_CONNECT_TIMEOUT_S, read=_READ_TIMEOUT_S),
+            retries=False,
+        )
+    except Exception as e:
+        raise RuntimeError(f"Gemini request failed for model {model_id}: {e}") from e
+
+    if response.status == 200:
+        return response
+
+    if response.status not in _RETRYABLE_STATUSES:
+        raise RuntimeError(
+            f"Gemini returned HTTP {response.status} for model {model_id}: "
+            f"{response.data.decode('utf-8', errors='replace')[:500]}"
+        )
+
+    logger.warning("Retrying Gemini call for model %s after HTTP %s", model_id, response.status)
+    time.sleep(_RETRY_DELAY_S)
+
+    try:
+        response = _pool().request(
+            "POST",
+            url,
+            body=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            timeout=urllib3.Timeout(connect=_CONNECT_TIMEOUT_S, read=_READ_TIMEOUT_S),
+            retries=False,
+        )
+    except Exception as e:
+        raise RuntimeError(f"Gemini request failed for model {model_id} on retry: {e}") from e
+
+    if response.status == 200:
+        return response
+
+    raise RuntimeError(
+        f"Gemini returned HTTP {response.status} for model {model_id} (after one retry): "
+        f"{response.data.decode('utf-8', errors='replace')[:500]}"
+    )
+
+
 def converse(
     model_id: str,
     system: str,
     messages: list[dict[str, Any]],
     tool_schema: dict | None = None,
 ) -> dict[str, Any]:
-    """Single Gemini generateContent call, matching clients/bedrock.py::converse()'s
-    contract: with tool_schema, returns the parsed structured object directly; without,
-    returns {"text": <response text>}.
+    """Single Gemini generateContent call (with one fast retry on a transient failure -
+    see _post), matching clients/bedrock.py::converse()'s contract: with tool_schema,
+    returns the parsed structured object directly; without, returns {"text": ...}.
     """
     config = Config.from_env()
     if not config.gemini_api_key:
@@ -117,24 +185,7 @@ def converse(
 
     url = f"{_API_BASE}/{model_id}:generateContent?key={config.gemini_api_key}"
 
-    try:
-        response = _pool().request(
-            "POST",
-            url,
-            body=json.dumps(body).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            timeout=urllib3.Timeout(connect=_CONNECT_TIMEOUT_S, read=_READ_TIMEOUT_S),
-            retries=False,
-        )
-    except Exception as e:
-        raise RuntimeError(f"Gemini request failed for model {model_id}: {e}") from e
-
-    if response.status != 200:
-        raise RuntimeError(
-            f"Gemini returned HTTP {response.status} for model {model_id}: "
-            f"{response.data.decode('utf-8', errors='replace')[:500]}"
-        )
-
+    response = _post(url, body, model_id)
     payload = json.loads(response.data.decode("utf-8"))
     candidates = payload.get("candidates") or []
     if not candidates:
