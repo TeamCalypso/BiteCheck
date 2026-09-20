@@ -1,11 +1,9 @@
 /**
  * BiteCheck API Client
  * Connects the web frontend to the AWS HTTP API.
- * Provides fallback to contract fixtures when offline or during demo evaluation.
  */
 
 import { ENDPOINTS } from '../config.js';
-import { FIXTURES } from './fixtures.js';
 
 const ASIN_REGEX = /(?:dp|gp\/product|gp\/aw\/d|product)\/([A-Z0-9]{10})|[?&](?:asin|ASIN)=([A-Z0-9]{10})\b/i;
 
@@ -29,22 +27,9 @@ export function isValidAmazonUrl(url) {
 /**
  * POST /v1/analyze
  * Executes food safety and grounding analysis for an Amazon product URL.
- * Falls back to fixture data if offline or if fixture ASIN is detected.
  */
 export async function analyzeProduct(url, options = {}) {
   const { forceRefresh = false, timeoutMs = 8000 } = options;
-
-  // Check if this matches one of our demo fixture ASINs directly
-  const asin = extractAsin(url);
-  if (asin) {
-    for (const [key, fix] of Object.entries(FIXTURES)) {
-      if (fix.asin === asin || url.toLowerCase().includes(key)) {
-        // Return a brief simulated network latency to demonstrate scanning animation
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        return { data: fix, source: 'fixture', fixtureKey: key };
-      }
-    }
-  }
 
   // Live API Call with AbortController
   const controller = new AbortController();

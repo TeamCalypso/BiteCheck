@@ -1,6 +1,5 @@
-// UI Controller for BiteCheck: Search, Demo Cards, Scanning HUD, Grounded Findings & FoSCoS Grievance
+// UI Controller for BiteCheck: Search, Scanning HUD, Grounded Findings & FoSCoS Grievance
 import { analyzeProduct, fetchTrending, draftGrievance, extractAsin } from '../api/client.js';
-import { FIXTURES } from '../api/fixtures.js';
 import { PARTICLE_STATES } from '../particles/particleEngine.js';
 import { STATUS_COLORS, STATUS_LABELS, MACRO_CLASS_COLORS, ADDITIVE_RISK_COLORS } from '../config.js';
 
@@ -71,9 +70,6 @@ export function setupUI(engine) {
   const copyGrievanceBtn = document.getElementById('copy-grievance-btn');
   const copyBtnLabel = document.getElementById('copy-btn-label');
 
-  // Demo Cards
-  const demoCards = document.querySelectorAll('.demo-card');
-
   let currentAnalysis = null;
   let pipelineTimer = null;
 
@@ -103,19 +99,6 @@ export function setupUI(engine) {
   });
 
   submitBtn.addEventListener('click', () => triggerAnalysis());
-
-  // Demo Cards Click Handling
-  demoCards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const fixtureKey = card.getAttribute('data-fixture');
-      const fixture = FIXTURES[fixtureKey];
-      if (fixture) {
-        linkInput.value = `https://www.amazon.in/dp/${fixture.asin}`;
-        clearInputBtn.style.display = 'flex';
-        executeInspection(fixture);
-      }
-    });
-  });
 
   // Reset Button
   if (resetViewBtn) {
@@ -176,12 +159,10 @@ export function setupUI(engine) {
    * Main Trigger: Reads input and runs inspection
    */
   async function triggerAnalysis() {
-    let url = linkInput.value.trim();
+    const url = linkInput.value.trim();
     if (!url) {
-      // Default to the Everest Garam Masala demo recall case
-      url = 'https://www.amazon.in/dp/B0FIXTURE1';
-      linkInput.value = url;
-      clearInputBtn.style.display = 'flex';
+      linkInput.focus();
+      return;
     }
 
     startScanningSequence();
@@ -189,7 +170,7 @@ export function setupUI(engine) {
     try {
       const response = await analyzeProduct(url);
       if (apiStatusText) {
-        apiStatusText.textContent = response.source === 'live' ? 'Live API' : 'Demo / Fixture';
+        apiStatusText.textContent = 'Live API';
       }
       displayResults(response.data);
     } catch (err) {
@@ -197,16 +178,6 @@ export function setupUI(engine) {
       alert(`Analysis failed: ${err.message}`);
       engine.transitionToAmbient();
     }
-  }
-
-  /**
-   * Direct Fixture Inspection (for 1-click Demo Cards)
-   */
-  async function executeInspection(fixtureData) {
-    startScanningSequence();
-    // Simulate short network latency so judges can view the scanning convergence
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    displayResults(fixtureData);
   }
 
   /**
@@ -296,7 +267,7 @@ export function setupUI(engine) {
     verdictStatusPill.style.borderColor = `${statusColor}60`;
     verdictStatusPill.style.color = statusColor;
 
-    verdictCacheTag.textContent = data.cached ? '⚡ Cached Advisory (Instant)' : '🔍 Live Bedrock Grounded';
+    verdictCacheTag.textContent = data.cached ? '⚡ Cached Advisory (Instant)' : '🔍 Live, Grounded Analysis';
     verdictScore.textContent = verdict.score;
     verdictScore.style.color = statusColor;
 
