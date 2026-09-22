@@ -102,7 +102,12 @@ Resources:
       CodeUri: ../services/api/src
       Handler: bitecheck.handlers.analyze.handler
       Description: Main orchestrator - resolve, cache, normalize, retrieve, assess, ground.
-      Timeout: 25
+      # At the HTTP API's own 29s integration ceiling - a cache-miss request can make up
+      # to 3 sequential Gemini calls (see clients/gemini.py's _READ_TIMEOUT_S comment for
+      # the full budget math). Was briefly out of sync with a manual console change during
+      # a live incident (2026-09-22, Gemini itself degraded) - codified here so the next
+      # `sam deploy` doesn't silently revert it back to 25.
+      Timeout: 29
       MemorySize: 1024
       Policies:
         - DynamoDBCrudPolicy: { TableName: !Ref CacheTable }

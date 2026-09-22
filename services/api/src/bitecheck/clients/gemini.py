@@ -24,7 +24,21 @@ from bitecheck.config import Config
 logger = logging.getLogger(__name__)
 
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-_READ_TIMEOUT_S = 20
+
+# Sized against a hard constraint, not a guess: AnalyzeFunction's Lambda timeout is 29s
+# (infra/template.yaml - already at the HTTP API integration's own 30s ceiling, so it
+# cannot go higher), and a single cache-miss request can make up to THREE sequential
+# Gemini calls - normalizer.normalize() (entity extraction), nutrition.py's
+# _from_gemini_estimate() (only when no label/OFF/catalog match), and verdict.assess().
+# At the old 20s read timeout, three calls could cost up to 60s on their own before ever
+# considering the rest of the pipeline - observed live, 2026-09-22: Gemini itself was
+# degraded (reads not completing at all, not just slow), so real requests were hitting a
+# hard platform-level Lambda timeout with no clean response, which is worse than an honest
+# NO_DATA: the client never even gets JSON back to show a real error. 8s bounds the worst
+# case at 3 x 8s = 24s, leaving headroom for the rest of the pipeline (resolve, cache,
+# Open Food Facts' own 2.5s timeout, retrieval, grounding) - and it's still generous for a
+# healthy call, which has been observed completing in 2-8s.
+_READ_TIMEOUT_S = 8
 _CONNECT_TIMEOUT_S = 5
 
 # Google's free-tier models return these when overloaded (observed live, 2026-09-20:
@@ -33,8 +47,8 @@ _CONNECT_TIMEOUT_S = 5
 # because verdict.py deliberately degrades to NO_DATA on any LLM failure rather than
 # guessing (see its docstring), so an unretried transient error looks identical to a
 # genuinely clean product instead of surfacing as an error. Kept to a single retry with a
-# short fixed delay: the whole analyze pipeline has a 25s Lambda budget shared across two
-# sequential Gemini calls (normalize + assess), so this must stay cheap in the common case.
+# short fixed delay - see _READ_TIMEOUT_S above for why this whole module has to stay
+# cheap: up to three of these calls can happen in one request, inside a fixed 29s budget.
 _RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 _RETRY_DELAY_S = 0.5
 
